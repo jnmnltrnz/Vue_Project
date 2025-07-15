@@ -231,7 +231,7 @@
             <button
               type="button"
               class="btn btn-success"
-              @click="goToEmployeeList"
+              @click="viewEmployees"
             >
               View All Employees
             </button>
@@ -319,6 +319,9 @@ export default {
       } finally {
         this.isLoading = false;
       }
+    },
+    viewEmployees() {
+      this.$router.push({ name: "EmployeeList" });
     },
     resetForm() {
       this.showSuccessModal = false;
