@@ -9,7 +9,6 @@ class AuthService {
   }
 
   logout(username) {
-    console.log("Calling backend logout for:", username); // Debug
     return axios.post(`${API_BASE}/logout`, { username });
   }
 }

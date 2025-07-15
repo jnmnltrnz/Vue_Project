@@ -51,6 +51,8 @@
 
 <script>
 import AuthService from "@/services/AuthService";
+import EmployeeService from "@/services/EmployeeService";
+
 export default {
   name: "LoginForm",
   data: () => ({
@@ -66,9 +68,32 @@ export default {
 
       this.$nextTick(() => {
         AuthService.login({ username: this.username, password: this.password })
-                    .then(() => {
+          .then(async (response) => {
             localStorage.setItem("isLoggedIn", "true");
             localStorage.setItem("username", this.username);
+      
+              const accountId = response.data.data.id.toString();
+              localStorage.setItem("accountId", accountId);
+              
+              // Fetch and store employee full name
+              try {
+                const employeeResponse = await EmployeeService.getAllEmployees();
+                const employee = employeeResponse.data.data.find(emp => {
+                  return emp.id === parseInt(accountId);
+                });
+                
+                
+                if (employee && employee.firstName && employee.lastName) {
+                  const fullName = `${employee.firstName} ${employee.lastName}`;
+                  localStorage.setItem("employeeFullName", fullName);
+                } else {
+                  console.log('Employee not found or missing name data');
+                }
+                
+              } catch (error) {
+                console.error("Error fetching employee details:", error);
+              }
+            
           })
           .catch(() => (this.error = "Invalid username or password"))
           .finally(() => {

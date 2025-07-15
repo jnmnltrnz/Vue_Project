@@ -204,7 +204,7 @@
 
         <!-- Cached Profile Images -->
         <div class="cache-section">
-          <h6>🖼️ Cached Profile Images ({{ cacheStats.profileImages }})</h6>
+          <h6>🖼️ Employee Profile Images ({{ cacheStats.profileImages }})</h6>
           <div class="table-responsive">
             <table class="table table-sm table-striped">
               <thead>
@@ -215,15 +215,15 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="[employeeId, imageUrl] in cachedProfileImages" :key="employeeId">
-                  <td>{{ employeeId }}</td>
+                <tr v-for="profile in cachedProfileImages" :key="profile.employeeId">
+                  <td>{{ profile.employeeId }}</td>
                   <td>
-                    <span :class="imageUrl ? 'text-success' : 'text-muted'">
-                      {{ imageUrl ? 'Yes' : 'No' }}
+                    <span :class="profile.hasImage ? 'text-success' : 'text-muted'">
+                      {{ profile.hasImage ? 'Yes' : 'No' }}
                     </span>
                   </td>
                   <td>
-                    <button class="btn btn-sm btn-outline-danger" @click="clearProfileImageCache(employeeId)">
+                    <button class="btn btn-sm btn-outline-danger" @click="clearProfileImageCache(profile.employeeId)">
                       Clear
                     </button>
                   </td>
@@ -270,7 +270,7 @@ export default {
         projects: this.projectCacheData.projects.length,
         meetings: this.meetingCacheData.meetings.length,
         documents: this.cacheData.documents.size,
-        profileImages: this.cacheData.profileImages.size
+        profileImages: this.cacheData.employees.size // Show total employees, not just cached profile images
       };
     },
     employeeCacheAge() {
@@ -307,7 +307,35 @@ export default {
       return Array.from(this.cacheData.documents.entries());
     },
     cachedProfileImages() {
-      return Array.from(this.cacheData.profileImages.entries());
+      // Get all employees from cache
+      const allEmployees = this.cacheData.employees;
+      const profileImages = this.cacheData.profileImages;
+      
+      // Create a map of all employees with their profile image status
+      const employeeProfileStatus = [];
+      
+      // Add employees with cached profile images
+      for (const [employeeId, imageUrl] of profileImages) {
+        employeeProfileStatus.push({
+          employeeId: employeeId,
+          hasImage: true,
+          imageUrl: imageUrl
+        });
+      }
+      
+      // Add employees without profile images (they won't be in the cache)
+      for (const [employeeId] of allEmployees) {
+        if (!profileImages.has(employeeId)) {
+          employeeProfileStatus.push({
+            employeeId: employeeId,
+            hasImage: false,
+            imageUrl: null
+          });
+        }
+      }
+      
+      // Sort by employee ID
+      return employeeProfileStatus.sort((a, b) => a.employeeId - b.employeeId);
     }
   },
   methods: {

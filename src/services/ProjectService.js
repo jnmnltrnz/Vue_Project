@@ -9,7 +9,7 @@ class ProjectService {
     static async getAllProjects() {
         try {
             const response = await axios.get(PROJECT_API_URL);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error('Error fetching all projects:', error);
             throw error;
@@ -20,7 +20,7 @@ class ProjectService {
     static async getProjectById(id) {
         try {
             const response = await axios.get(`${PROJECT_API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error(`Error fetching project with ID ${id}:`, error);
             throw error;
@@ -31,7 +31,7 @@ class ProjectService {
     static async createProject(projectData) {
         try {
             const response = await axios.post(PROJECT_API_URL, projectData);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error('Error creating project:', error);
             throw error;
@@ -42,7 +42,7 @@ class ProjectService {
     static async updateProject(id, projectData) {
         try {
             const response = await axios.put(`${PROJECT_API_URL}/${id}`, projectData);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error(`Error updating project with ID ${id}:`, error);
             throw error;
@@ -53,7 +53,7 @@ class ProjectService {
     static async deleteProject(id) {
         try {
             const response = await axios.delete(`${PROJECT_API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error(`Error deleting project with ID ${id}:`, error);
             throw error;
@@ -64,7 +64,7 @@ class ProjectService {
     static async assignEmployeesToProject(projectId, employeeIds) {
         try {
             const response = await axios.post(`${PROJECT_API_URL}/${projectId}/assign-employees`, employeeIds);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error(`Error assigning employees to project ${projectId}:`, error);
             throw error;
@@ -77,7 +77,7 @@ class ProjectService {
             const response = await axios.delete(`${PROJECT_API_URL}/${projectId}/remove-employees`, {
                 data: employeeIds
             });
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error(`Error removing employees from project ${projectId}:`, error);
             throw error;
@@ -88,12 +88,15 @@ class ProjectService {
     static async getProjectsByEmployee(employeeId) {
         try {
             const response = await axios.get(`${PROJECT_API_URL}/employee/${employeeId}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error(`Error fetching projects for employee ${employeeId}:`, error);
             throw error;
         }
     }
+
+
+    
 
     // Helper method to format project data for API
     static formatProjectData(project) {

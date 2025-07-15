@@ -22,43 +22,45 @@
 
     <!-- Main Content -->
     <div class="container mt-4">
-      <!-- Stats Cards -->
+      <!-- Dashboard Overview -->
       <div class="row mb-4">
-        <div class="col-md-4 mb-3">
-          <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-              <div class="stats-icon mb-3">
-                <i class="bi bi-people-fill text-primary fs-1"></i>
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+              <div class="overview-icon mb-4">
+                <i class="bi bi-speedometer2 text-primary" style="font-size: 4rem;"></i>
               </div>
-              <div v-if="isLoadingEmployees" class="d-flex justify-content-center">
-                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
+              <h2 class="text-primary mb-3">Dashboard Overview</h2>
+              <p class="lead text-muted mb-4">
+                Quick access to your most important management tools and recent activities.
+              </p>
+              <div class="row justify-content-center">
+                <div class="col-md-8">
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <div class="feature-item">
+                        <i class="bi bi-people text-success fs-2 mb-2"></i>
+                        <h5>Team Management</h5>
+                        <p class="text-muted small">View and manage your team members</p>
+                      </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <div class="feature-item">
+                        <i class="bi bi-kanban text-info fs-2 mb-2"></i>
+                        <h5>Project Control</h5>
+                        <p class="text-muted small">Monitor and track project progress</p>
+                      </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <div class="feature-item">
+                        <i class="bi bi-list-task text-warning fs-2 mb-2"></i>
+                        <h5>Task Assignment</h5>
+                        <p class="text-muted small">Assign and track individual tasks</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <h3 v-else class="card-title text-primary">{{ totalEmployees }}</h3>
-              <p class="card-text text-muted">Total Employees</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-              <div class="stats-icon mb-3">
-                <i class="bi bi-calendar-check text-success fs-1"></i>
-              </div>
-              <h3 class="card-title text-success">{{ activeProjects }}</h3>
-              <p class="card-text text-muted">Active Projects</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-              <div class="stats-icon mb-3">
-                <i class="bi bi-graph-up text-info fs-1"></i>
-              </div>
-              <h3 class="card-title text-info">{{ revenue }}</h3>
-              <p class="card-text text-muted">Monthly Revenue</p>
             </div>
           </div>
         </div>
@@ -110,7 +112,7 @@
             <div class="card-header bg-light">
               <h5 class="mb-0">Recent Activity</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body d-flex flex-column" style="height: 400px;">
               <div v-if="isLoadingActivity" class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">Loading...</span>
@@ -121,55 +123,64 @@
                 <i class="bi bi-activity text-muted fs-1"></i>
                 <p class="mt-2 text-muted">No recent activity found</p>
               </div>
-              <div v-else class="activity-list">
-                <div v-for="activity in recentActivity" :key="activity.id" class="activity-item d-flex align-items-center mb-3">
-                  
+              <div v-else class="activity-list" style="flex: 1; overflow-y: auto;">
+                <div v-for="activity in paginatedActivity" :key="activity.id" class="activity-item d-flex align-items-center mb-3">
                   <div class="activity-content flex-grow-1">
-                    <div class="activity-text">{{ activity.text }}</div>
+                    <div class="activity-text text-truncate" :title="activity.text">{{ activity.text }}</div>
                     <small class="text-muted">{{ activity.time }}</small>
                   </div>
                 </div>
-                
-                <!-- Pagination -->
-                <div v-if="totalActivityPages > 1" class="d-flex justify-content-center mt-3">
-                  <nav aria-label="Activity pagination">
-                    <ul class="pagination pagination-sm mb-0">
-                      <li class="page-item" :class="{ disabled: currentActivityPage === 1 }">
-                        <button 
-                          class="page-link" 
-                          @click="changeActivityPage(currentActivityPage - 1)"
-                          :disabled="currentActivityPage === 1"
-                        >
-                          <i class="bi bi-chevron-left"></i>
-                        </button>
-                      </li>
-                      
-                      <li 
-                        v-for="page in totalActivityPages" 
-                        :key="page" 
-                        class="page-item"
-                        :class="{ active: page === currentActivityPage }"
-                      >
-                        <button 
-                          class="page-link" 
-                          @click="changeActivityPage(page)"
-                        >
-                          {{ page }}
-                        </button>
-                      </li>
-                      
-                      <li class="page-item" :class="{ disabled: currentActivityPage === totalActivityPages }">
-                        <button 
-                          class="page-link" 
-                          @click="changeActivityPage(currentActivityPage + 1)"
-                          :disabled="currentActivityPage === totalActivityPages"
-                        >
-                          <i class="bi bi-chevron-right"></i>
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
+              </div>
+              
+              <!-- Activity Pagination - Fixed at bottom -->
+              <div v-if="recentActivity.length > 0" class="d-flex justify-content-between align-items-center p-3 border-top" style="height: 60px; flex-shrink: 0;">
+                <div class="text-muted">
+                  <span v-if="recentActivity.length > 0">
+                    Showing {{ (currentActivityPage - 1) * activitiesPerPage + 1 }} to 
+                    {{ Math.min(currentActivityPage * activitiesPerPage, recentActivity.length) }} 
+                    of {{ recentActivity.length }} activities
+                  </span>
+                  <span v-else>
+                    No activities found
+                  </span>
                 </div>
+                <nav v-if="recentActivity.length > 0" aria-label="Activity pagination">
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" :class="{ disabled: currentActivityPage === 1 }">
+                      <button 
+                        class="page-link" 
+                        @click="changeActivityPage(currentActivityPage - 1)"
+                        :disabled="currentActivityPage === 1"
+                      >
+                        <i class="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    
+                    <li 
+                      v-for="page in getActivityPageNumbers(totalActivityPages, currentActivityPage)" 
+                      :key="page" 
+                      class="page-item"
+                      :class="{ active: page === currentActivityPage }"
+                    >
+                      <button 
+                        class="page-link" 
+                        @click="changeActivityPage(page)"
+                      >
+                        {{ page }}
+                      </button>
+                    </li>
+                    
+                    <li class="page-item" :class="{ disabled: currentActivityPage === totalActivityPages }">
+                      <button 
+                        class="page-link" 
+                        @click="changeActivityPage(currentActivityPage + 1)"
+                        :disabled="currentActivityPage === totalActivityPages"
+                      >
+                        <i class="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
               </div>
             </div>
           </div>
@@ -178,10 +189,10 @@
           <div class="card shadow-sm h-100">
             <div class="card-header bg-light">
               <h5 class="mb-0">
-                <i class="bi bi-calendar-event me-2"></i>This Week's Meetings
+                <i class="bi bi-calendar-event me-2"></i>Upcoming Meetings (This Week)
               </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body d-flex flex-column" style="height: 400px;">
               <!-- Loading State -->
               <div v-if="isLoadingMeetings" class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
@@ -191,7 +202,7 @@
               </div>
 
               <!-- Meetings List -->
-              <div v-else class="event-list">
+              <div v-else class="event-list" style="flex: 1; overflow-y: auto;">
                 <div v-for="meeting in paginatedMeetings" :key="meeting.id" class="event-item d-flex align-items-center mb-3">
                   <div class="event-content flex-grow-1">
                     <div class="event-title">{{ meeting.title }}</div>
@@ -202,45 +213,42 @@
                 <!-- No Meetings Message -->
                 <div v-if="upcomingMeetings.length === 0" class="text-center py-3">
                   <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
-                  <p class="text-muted mt-2 mb-0">No meetings scheduled this week</p>
+                  <p class="text-muted mt-2 mb-0">No upcoming meetings this week</p>
                   <button class="btn btn-sm btn-outline-primary mt-2" @click="viewMeetings">
                     <i class="bi bi-plus-circle me-1"></i>Schedule Meeting
                   </button>
                 </div>
-                
-                <!-- Meetings Pagination -->
-                <div v-if="upcomingMeetings.length > 0" class="d-flex justify-content-between align-items-center mt-3">
-                  <div class="text-muted">
-                    <span v-if="upcomingMeetings.length > 0">
-                      Showing {{ (currentMeetingsPage - 1) * meetingsPerPage + 1 }} to 
-                      {{ Math.min(currentMeetingsPage * meetingsPerPage, upcomingMeetings.length) }} 
-                      of {{ upcomingMeetings.length }} meetings
-                    </span>
-                    <span v-else>
-                      No meetings this week
-                    </span>
-                  </div>
-                  <nav v-if="upcomingMeetings.length > 0" aria-label="Meetings pagination">
-                    <ul class="pagination pagination-sm mb-0">
-                      <li class="page-item" :class="{ disabled: currentMeetingsPage === 1 }">
-                        <button class="page-link" @click="changeMeetingsPage(currentMeetingsPage - 1)" :disabled="currentMeetingsPage === 1">
-                          <i class="bi bi-chevron-left"></i>
-                        </button>
-                      </li>
-                      <li v-for="page in getPageNumbers(totalMeetingsPages, currentMeetingsPage)" :key="page" class="page-item" :class="{ active: page === currentMeetingsPage }">
-                        <button class="page-link" @click="changeMeetingsPage(page)">{{ page }}</button>
-                      </li>
-                      <li class="page-item" :class="{ disabled: currentMeetingsPage === totalMeetingsPages }">
-                        <button class="page-link" @click="changeMeetingsPage(currentMeetingsPage + 1)" :disabled="currentMeetingsPage === totalMeetingsPages">
-                          <i class="bi bi-chevron-right"></i>
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                  <div v-if="upcomingMeetings.length > 0 && totalMeetingsPages === 1" class="text-muted">
-                    Page 1 of 1
-                  </div>
+              </div>
+              
+              <!-- Pagination - Fixed at bottom -->
+              <div v-if="upcomingMeetings.length > 0" class="d-flex justify-content-between align-items-center p-3 border-top" style="height: 60px; flex-shrink: 0;">
+                <div class="text-muted">
+                  <span v-if="upcomingMeetings.length > 0">
+                    Showing {{ (currentMeetingsPage - 1) * meetingsPerPage + 1 }} to 
+                    {{ Math.min(currentMeetingsPage * meetingsPerPage, upcomingMeetings.length) }} 
+                    of {{ upcomingMeetings.length }} meetings
+                  </span>
+                  <span v-else>
+                    No meetings this week
+                  </span>
                 </div>
+                <nav v-if="upcomingMeetings.length > 0" aria-label="Meetings pagination">
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" :class="{ disabled: currentMeetingsPage === 1 }">
+                      <button class="page-link" @click="changeMeetingsPage(currentMeetingsPage - 1)" :disabled="currentMeetingsPage === 1">
+                        <i class="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    <li v-for="page in getPageNumbers(totalMeetingsPages, currentMeetingsPage)" :key="page" class="page-item" :class="{ active: page === currentMeetingsPage }">
+                      <button class="page-link" @click="changeMeetingsPage(page)">{{ page }}</button>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentMeetingsPage === totalMeetingsPages }">
+                      <button class="page-link" @click="changeMeetingsPage(currentMeetingsPage + 1)" :disabled="currentMeetingsPage === totalMeetingsPages">
+                        <i class="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
               </div>
             </div>
           </div>
@@ -277,15 +285,12 @@
 </template>
 
 <script>
-import AuthService from "@/services/AuthService";
-import AuditService from "@/services/AuditService";
-import EmployeeService from "@/services/EmployeeService";
-import EmployeeCache from "@/services/EmployeeCache";
+
 import MeetingService from "@/services/MeetingService";
 import MeetingCache from "@/services/MeetingCache";
-import ProjectService from "@/services/ProjectService";
-import ProjectCache from "@/services/ProjectCache";
 import DebugButton from "@/components/Debug/DebugButton.vue";
+import AuditService from "@/services/AuditService";
+import AuthService from "@/services/AuthService";
 
 export default {
   name: "CompanyDashboard",
@@ -296,86 +301,45 @@ export default {
     return {
       username: "",
       isLoggingOut: false,
-      isLoadingActivity: false,
-      isLoadingEmployees: false,
-      totalEmployees: 0,
-      activeProjects: 0,
-      revenue: "$2.4M",
+      // Activity tracking
       recentActivity: [],
+      isLoadingActivity: false,
       currentActivityPage: 1,
-      activitiesPerPage: 5,
-      totalActivities: 0,
+      activitiesPerPage: 10,
+      // Meetings tracking
       upcomingMeetings: [],
       isLoadingMeetings: false,
-      // Meetings pagination
       currentMeetingsPage: 1,
       meetingsPerPage: 5,
-      totalMeetings: 0
+      totalMeetings: 0,
+      // Pagination
+      totalActivityPages: 0,
+      totalMeetingsPages: 0
     };
   },
       created() {
       this.username = localStorage.getItem("username") || "User";
       this.loadAuditLogs();
-      this.loadEmployees();
       this.loadMeetings();
-      this.loadProjects();
-      
-      // Listen for employee deletion events using window events
-      window.addEventListener('employee-deleted', this.updateEmployeeCount);
-      window.addEventListener('employee-added', this.updateEmployeeCount);
-      
-      // Listen for meeting events
-      window.addEventListener('meeting-added', this.refreshMeetings);
-      window.addEventListener('meeting-updated', this.refreshMeetings);
-      window.addEventListener('meeting-deleted', this.refreshMeetings);
-      
-      // Listen for project events
-      window.addEventListener('project-added', this.refreshProjects);
-      window.addEventListener('project-updated', this.refreshProjects);
-      window.addEventListener('project-deleted', this.refreshProjects);
     },
+  
+  // Add activated lifecycle hook to refresh data when navigating back
+  activated() {
+    // Always refresh audit logs when dashboard is activated
+    this.loadAuditLogs();
+    this.loadMeetings();
+  },
+  
   beforeUnmount() {
-    // Clean up event listeners
-    window.removeEventListener('employee-deleted', this.updateEmployeeCount);
-    window.removeEventListener('employee-added', this.updateEmployeeCount);
-    window.removeEventListener('meeting-added', this.refreshMeetings);
-    window.removeEventListener('meeting-updated', this.refreshMeetings);
-    window.removeEventListener('meeting-deleted', this.refreshMeetings);
-    window.removeEventListener('project-added', this.refreshProjects);
-    window.removeEventListener('project-updated', this.refreshProjects);
-    window.removeEventListener('project-deleted', this.refreshProjects);
+    // No event listeners to clean up
   },
   methods: {
     async loadAuditLogs() {
-      // Check if we have cached audit logs for this user
-      const cacheKey = `audit_logs_${this.username}`;
-      const timestampKey = `${cacheKey}_timestamp`;
-      const cachedLogs = sessionStorage.getItem(cacheKey);
-      const cacheTimestamp = sessionStorage.getItem(timestampKey);
-      
-      // Check if cache is valid (5 minutes expiry)
-      const cacheAge = cacheTimestamp ? Date.now() - parseInt(cacheTimestamp) : 0;
-      const cacheValid = cacheAge < 5 * 60 * 1000; // 5 minutes in milliseconds
-      
-      if (cachedLogs && cacheValid) {
-        try {
-          const parsedLogs = JSON.parse(cachedLogs);
-          this.recentActivity = this.formatAuditLogs(parsedLogs);
-          return;
-        } catch (error) {
-          console.error("Failed to parse cached audit logs:", error);
-        }
-      }
-
-      // Only fetch from API if cache is empty, invalid, or expired
+      // Always fetch fresh audit logs when dashboard is activated
       this.isLoadingActivity = true;
       try {
         const response = await AuditService.getAuditLogsByUser(this.username);
-        const auditLogs = response.data;
-        
-        // Cache the audit logs for 5 minutes
-        sessionStorage.setItem(cacheKey, JSON.stringify(auditLogs));
-        sessionStorage.setItem(timestampKey, Date.now().toString());
+        const auditLogs = response.data.data; // Access the data property of ApiResponse
         
         this.recentActivity = this.formatAuditLogs(auditLogs);
       } catch (error) {
@@ -388,22 +352,23 @@ export default {
     },
     
     formatAuditLogs(auditLogs) {
+      // Ensure auditLogs is an array
+      if (!auditLogs || !Array.isArray(auditLogs)) {
+        console.warn('Audit logs is not an array:', auditLogs);
+        return [];
+      }
+      
       // Sort by dateTriggered in descending order (latest first)
       const sortedLogs = auditLogs.sort((a, b) => 
         new Date(b.dateTriggered) - new Date(a.dateTriggered)
       );
       
-      this.totalActivities = sortedLogs.length;
+      this.totalActivityPages = Math.ceil(sortedLogs.length / this.activitiesPerPage);
       
-      // Calculate pagination
-      const startIndex = (this.currentActivityPage - 1) * this.activitiesPerPage;
-      const endIndex = startIndex + this.activitiesPerPage;
-      const paginatedLogs = sortedLogs.slice(startIndex, endIndex);
-      
-      return paginatedLogs.map((log, index) => {
+      return sortedLogs.map((log, index) => {
         const iconMapping = this.getIconForAction(log.actionMessage);
         return {
-          id: log.id || (startIndex + index + 1),
+          id: log.id || (index + 1),
           text: log.actionMessage,
           time: this.formatTimeAgo(log.dateTriggered),
           icon: iconMapping.icon,
@@ -452,8 +417,36 @@ export default {
     },
     
     changeActivityPage(page) {
-      this.currentActivityPage = page;
-      this.loadAuditLogs();
+      if (page >= 1 && page <= this.totalActivityPages) {
+        this.currentActivityPage = page;
+      }
+    },
+    
+    getActivityPageNumbers(totalPages, currentPage) {
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalPages <= maxVisiblePages) {
+        // Show all pages if total is less than max visible
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show pages around current page
+        let start = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        let end = Math.min(totalPages, start + maxVisiblePages - 1);
+        
+        // Adjust start if we're near the end
+        if (end === totalPages) {
+          start = Math.max(1, end - maxVisiblePages + 1);
+        }
+        
+        for (let i = start; i <= end; i++) {
+          pages.push(i);
+        }
+      }
+      
+      return pages;
     },
     
     changeMeetingsPage(page) {
@@ -489,94 +482,6 @@ export default {
       return pages;
     },
     
-    loadEmployees() {
-      // Check cache first for faster loading
-      if (EmployeeCache.hasAllEmployees()) {
-        const employees = EmployeeCache.getAllEmployees();
-        this.totalEmployees = employees.length;
-        return;
-      }
-
-      // Only fetch from API if cache is empty
-      this.isLoadingEmployees = true;
-      EmployeeService.getAllEmployees()
-        .then((response) => {
-          const employees = response.data;
-          this.totalEmployees = employees.length;
-          EmployeeCache.setAllEmployees(employees);
-          EmployeeCache.updateLastFetch();
-        })
-        .catch((error) => {
-          console.error("There was an error fetching the employees!", error);
-          this.totalEmployees = 0;
-        })
-        .finally(() => {
-          this.isLoadingEmployees = false;
-        });
-    },
-    
-    updateEmployeeCount() {
-      if (EmployeeCache.hasAllEmployees()) {
-        this.totalEmployees = EmployeeCache.getAllEmployees().length;
-      }
-    },
-    
-    refreshMeetings() {
-      // Force refresh meetings from cache or API
-      MeetingCache.clear();
-      this.loadMeetings();
-    },
-    
-    refreshProjects() {
-      // Force refresh projects from cache or API
-      ProjectCache.clear();
-      this.loadProjects();
-    },
-
-    clearAuditLogsCache() {
-      const cacheKey = `audit_logs_${this.username}`;
-      sessionStorage.removeItem(cacheKey);
-      sessionStorage.removeItem(`${cacheKey}_timestamp`);
-    },
-
-    refreshAuditLogs() {
-      // Clear cache and reload audit logs
-      this.clearAuditLogsCache();
-      this.loadAuditLogs();
-    },
-
-    async loadProjects() {
-      try {
-        // Check cache first for faster loading
-        if (ProjectCache.hasAllProjects()) {
-          const projects = ProjectCache.getAllProjects();
-          this.activeProjects = projects.filter(project => 
-            project.status === 'PLANNING' || project.status === 'IN_PROGRESS'
-          ).length;
-          return;
-        }
-
-        // Only fetch from API if cache is empty
-        const response = await ProjectService.getAllProjects();
-        const projects = response || [];
-        
-        // Store in cache for faster access on other pages
-        ProjectCache.setAllProjects(projects);
-        ProjectCache.updateLastFetch();
-        
-        // Calculate active projects (PLANNING or IN_PROGRESS)
-        this.activeProjects = projects.filter(project => 
-          project.status === 'PLANNING' || project.status === 'IN_PROGRESS'
-        ).length;
-
-        
-      } catch (error) {
-        console.error("Failed to load projects:", error);
-        this.activeProjects = 0;
-        ProjectCache.clear();
-      }
-    },
-
     async loadMeetings() {
       // Check cache first for faster loading
       if (MeetingCache.hasAllMeetings()) {
@@ -584,6 +489,7 @@ export default {
         const thisWeekMeetings = this.filterMeetingsForCurrentWeek(allMeetings);
         this.upcomingMeetings = this.formatMeetings(thisWeekMeetings);
         this.totalMeetings = this.upcomingMeetings.length;
+        this.totalMeetingsPages = Math.ceil(this.upcomingMeetings.length / this.meetingsPerPage);
         this.currentMeetingsPage = 1;
         return;
       }
@@ -592,21 +498,23 @@ export default {
       this.isLoadingMeetings = true;
       try {
         const response = await MeetingService.getAllMeetings();
-        const allMeetings = response.data || [];
+        const allMeetings = response.data.data || []; // Access the data property of ApiResponse
         
         // Store in cache for faster access on other pages
         MeetingCache.setAllMeetings(allMeetings);
         
-        // Filter meetings for current week only
+        // Filter meetings for current week only (from today onwards)
         const thisWeekMeetings = this.filterMeetingsForCurrentWeek(allMeetings);
         this.upcomingMeetings = this.formatMeetings(thisWeekMeetings);
         this.totalMeetings = this.upcomingMeetings.length;
+        this.totalMeetingsPages = Math.ceil(this.upcomingMeetings.length / this.meetingsPerPage);
         // Reset pagination to first page
         this.currentMeetingsPage = 1;
       } catch (error) {
         console.error("Failed to load upcoming meetings:", error);
         this.upcomingMeetings = [];
         this.totalMeetings = 0;
+        this.totalMeetingsPages = 0;
         MeetingCache.clear();
       } finally {
         this.isLoadingMeetings = false;
@@ -614,6 +522,12 @@ export default {
     },
 
     filterMeetingsForCurrentWeek(meetings) {
+      // Ensure meetings is an array
+      if (!meetings || !Array.isArray(meetings)) {
+        console.warn('Meetings is not an array:', meetings);
+        return [];
+      }
+      
       const now = new Date();
       const startOfWeek = new Date(now);
       const endOfWeek = new Date(now);
@@ -628,16 +542,27 @@ export default {
       endOfWeek.setDate(startOfWeek.getDate() + 6);
       endOfWeek.setHours(23, 59, 59, 999);
       
-      return meetings.filter(meeting => {
-        const meetingDate = new Date(meeting.meetingDate);
-        return meetingDate >= startOfWeek && meetingDate <= endOfWeek;
-      });
+      // Filter meetings from today onwards within this week and sort by date/time
+      return meetings
+        .filter(meeting => {
+          const meetingDate = new Date(meeting.meetingDate);
+          const meetingDateTime = new Date(`${meeting.meetingDate}T${meeting.meetingTime}`);
+          
+          // Only include meetings from today onwards (not past meetings)
+          return meetingDateTime >= now && meetingDate <= endOfWeek;
+        })
+        .sort((a, b) => {
+          // Sort by date and time in ascending order (earliest first)
+          const dateA = new Date(`${a.meetingDate}T${a.meetingTime}`);
+          const dateB = new Date(`${b.meetingDate}T${b.meetingTime}`);
+          return dateA - dateB;
+        });
     },
 
     formatMeetings(meetings) {
       if (!meetings || !Array.isArray(meetings)) return [];
       
-      return meetings.slice(0, 5).map(meeting => {
+      return meetings.map(meeting => {
         const meetingDate = new Date(meeting.meetingDate);
         const dayName = meetingDate.toLocaleString('default', { weekday: 'long' });
         const month = meetingDate.toLocaleString('default', { month: 'long' });
@@ -678,6 +603,10 @@ export default {
           setTimeout(() => {
             localStorage.removeItem("isLoggedIn");
             localStorage.removeItem("username");
+            localStorage.removeItem("accountId");
+            localStorage.removeItem("meetings_cache");
+            localStorage.removeItem("meetings_last_fetch");
+        
             this.$router.replace({ name: "Login" });
           }, 1000);
         })
@@ -707,16 +636,21 @@ export default {
     }
   },
   computed: {
-    totalActivityPages() {
-      return Math.ceil(this.totalActivities / this.activitiesPerPage);
+    paginatedActivity() {
+      if (!Array.isArray(this.recentActivity)) {
+        return [];
+      }
+      const startIndex = (this.currentActivityPage - 1) * this.activitiesPerPage;
+      const endIndex = startIndex + this.activitiesPerPage;
+      return this.recentActivity.slice(startIndex, endIndex);
     },
     paginatedMeetings() {
+      if (!Array.isArray(this.upcomingMeetings)) {
+        return [];
+      }
       const startIndex = (this.currentMeetingsPage - 1) * this.meetingsPerPage;
       const endIndex = startIndex + this.meetingsPerPage;
       return this.upcomingMeetings.slice(startIndex, endIndex);
-    },
-    totalMeetingsPages() {
-      return Math.ceil(this.totalMeetings / this.meetingsPerPage);
     }
   }
 };
@@ -738,62 +672,27 @@ export default {
   color: white !important;
 }
 
-.stats-icon {
-  height: 60px;
+.overview-icon {
   display: flex;
-  align-items: center;
   justify-content: center;
-}
-
-.activity-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.activity-item:last-child {
-  border-bottom: none;
-}
-
-.activity-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #f8f9fa;
-  display: flex;
   align-items: center;
-  justify-content: center;
 }
 
-.event-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.event-item:last-child {
-  border-bottom: none;
-}
-
-.event-date {
-  width: 50px;
-  height: 50px;
-  background-color: #007bff;
-  color: white;
+.feature-item {
+  text-align: center;
+  padding: 1rem;
   border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.3s ease;
 }
 
-.event-day {
-  font-weight: bold;
-  font-size: 1.2em;
-  line-height: 1;
+.feature-item:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
 }
 
-.event-month {
-  font-size: 0.8em;
-  line-height: 1;
+.feature-item i {
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
 .card {
@@ -811,6 +710,67 @@ export default {
 
 .btn:hover {
   transform: translateY(-1px);
+}
+
+.activity-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.activity-item:hover {
+  background-color: #f8f9fa;
+}
+
+.activity-text {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.meeting-item {
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  border-left: 4px solid transparent;
+}
+
+.meeting-item:hover {
+  background-color: #f8f9fa;
+}
+
+.meeting-item.urgent {
+  border-left-color: #dc3545;
+  background-color: #fff5f5;
+}
+
+.meeting-item.important {
+  border-left-color: #fd7e14;
+  background-color: #fff8f0;
+}
+
+.meeting-item.normal {
+  border-left-color: #20c997;
+  background-color: #f0fffd;
+}
+
+.meeting-time {
+  font-weight: 600;
+  color: #495057;
+}
+
+.meeting-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.meeting-participants {
+  font-size: 0.875rem;
+  color: #6c757d;
 }
 
 .pagination {
@@ -842,5 +802,33 @@ export default {
 .pagination .page-item.active .page-link:hover {
   background-color: #0056b3;
   color: white;
+}
+.page-link {
+  border: none;
+  color: #6c757d;
+  padding: 0.375rem 0.75rem;
+}
+
+.page-link:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: transparent;
+}
+
+.stats-icon {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style> 

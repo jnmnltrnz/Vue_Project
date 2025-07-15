@@ -1,3 +1,7 @@
 {
-  "recommendations": ["Vue.volar"]
+    "recommendations": [
+        "ms-vscode.vscode-js-debug",
+        "ms-vscode.vscode-js-debug-companion",
+        "ms-vscode.vscode-chrome-debug"
+    ]
 }

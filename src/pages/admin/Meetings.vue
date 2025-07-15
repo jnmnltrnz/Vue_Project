@@ -77,14 +77,7 @@
                     ></button>
                   </span>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-outline-info"
-                  @click="openInviteModal"
-                >
-                  <i class="bi bi-person-plus me-1"></i>
-                  Invite Employees
-                </button>
+                
               </div>
             </div>
             <!-- Error Message -->
@@ -96,6 +89,7 @@
             </div>
 
             <div class="mt-4 d-flex justify-content-end">
+             
               <button
                 v-if="editingMeeting"
                 type="button"
@@ -104,6 +98,14 @@
               >
                 Cancel Edit
               </button>
+              <button
+                  type="button"
+                  class="btn btn-outline-info btn-lg px-4 me-2"
+                  @click="openInviteModal"
+                >
+                  <i class="bi bi-person-plus me-1"></i>
+                  Invite Employees
+                </button>
               <button
                 type="submit"
                 class="btn btn-success btn-lg px-4"
@@ -421,12 +423,15 @@
                   </td>
                   <td>
                     <span
-                      v-for="invitee in meeting.invitees"
+                      v-for="invitee in (meeting.invitees || [])"
                       :key="invitee.id"
                       class="badge bg-primary me-1 mb-1"
                     >
                       <i class="bi bi-person-circle me-1"></i
                       >{{ invitee.firstName }} {{ invitee.lastName }}
+                    </span>
+                    <span v-if="!meeting.invitees || meeting.invitees.length === 0" class="text-muted small">
+                      No invitees
                     </span>
                   </td>
                   <td>
@@ -505,9 +510,6 @@
                 </li>
               </ul>
             </nav>
-            <div v-if="sortedMeetings.length > 0 && totalUpcomingPages === 1" class="text-muted">
-              Page 1 of 1
-            </div>
           </div>
         </div>
       </div>
@@ -570,12 +572,15 @@
                   </td>
                   <td>
                     <span
-                      v-for="invitee in meeting.invitees"
+                      v-for="invitee in (meeting.invitees || [])"
                       :key="invitee.id"
                       class="badge bg-secondary me-1 mb-1"
                     >
                       <i class="bi bi-person-circle me-1"></i
                       >{{ invitee.firstName }} {{ invitee.lastName }}
+                    </span>
+                    <span v-if="!meeting.invitees || meeting.invitees.length === 0" class="text-muted small">
+                      No invitees
                     </span>
                   </td>
                   <td>
@@ -640,9 +645,6 @@
                 </li>
               </ul>
             </nav>
-            <div v-if="pastMeetings.length > 0 && totalPastPages === 1" class="text-muted">
-              Page 1 of 1
-            </div>
           </div>
         </div>
       </div>
@@ -690,6 +692,11 @@ export default {
   },
   computed: {
     sortedMeetings() {
+      // Ensure meetings is an array
+      if (!this.meetings || !Array.isArray(this.meetings)) {
+        return [];
+      }
+      
       // Filter upcoming meetings and sort by date and time ascending
       const now = new Date();
       return this.meetings
@@ -704,6 +711,9 @@ export default {
         });
     },
     filteredEmployees() {
+      if (!this.employees || !Array.isArray(this.employees)) {
+        return [];
+      }
       if (!this.employeeSearch) return this.employees;
       const search = this.employeeSearch.toLowerCase();
       return this.employees.filter(
@@ -719,11 +729,13 @@ export default {
         this.meetingForm.title &&
         this.meetingForm.date &&
         this.meetingForm.time &&
+        Array.isArray(this.meetingForm.invitees) &&
         this.meetingForm.invitees.length > 0
       );
     },
     allSelected() {
       return (
+        Array.isArray(this.filteredEmployees) &&
         this.filteredEmployees.length > 0 &&
         this.filteredEmployees.every((emp) =>
           this.tempInvitees.includes(emp.id)
@@ -731,6 +743,11 @@ export default {
       );
     },
     pastMeetings() {
+      // Ensure meetings is an array
+      if (!this.meetings || !Array.isArray(this.meetings)) {
+        return [];
+      }
+      
       const now = new Date();
       return this.meetings
         .filter(meeting => {
@@ -744,20 +761,26 @@ export default {
         });
     },
     paginatedUpcomingMeetings() {
+      if (!Array.isArray(this.sortedMeetings)) {
+        return [];
+      }
       const startIndex = (this.currentUpcomingPage - 1) * this.meetingsPerPage;
       const endIndex = startIndex + this.meetingsPerPage;
       return this.sortedMeetings.slice(startIndex, endIndex);
     },
     paginatedPastMeetings() {
+      if (!Array.isArray(this.pastMeetings)) {
+        return [];
+      }
       const startIndex = (this.currentPastPage - 1) * this.meetingsPerPage;
       const endIndex = startIndex + this.meetingsPerPage;
       return this.pastMeetings.slice(startIndex, endIndex);
     },
     totalUpcomingPages() {
-      return Math.ceil(this.sortedMeetings.length / this.meetingsPerPage);
+      return Array.isArray(this.sortedMeetings) ? Math.ceil(this.sortedMeetings.length / this.meetingsPerPage) : 0;
     },
     totalPastPages() {
-      return Math.ceil(this.pastMeetings.length / this.meetingsPerPage);
+      return Array.isArray(this.pastMeetings) ? Math.ceil(this.pastMeetings.length / this.meetingsPerPage) : 0;
     }
   },
   created() {
@@ -768,7 +791,7 @@ export default {
     async loadEmployees() {
       try {
         const response = await EmployeeService.getAllEmployees();
-        this.employees = response.data || [];
+        this.employees = response.data.data || []; // Access the data property of ApiResponse
       } catch (error) {
         this.employees = [];
         console.error("Error loading employees:", error);
@@ -782,13 +805,11 @@ export default {
         // Check cache first
         if (MeetingCache.hasAllMeetings()) {
           this.meetings = MeetingCache.getAllMeetings();
-          console.log("Meetings loaded from cache");
         } else {
           // Fetch from API if cache is empty or expired
           const response = await MeetingService.getAllMeetings();
-          this.meetings = response.data || [];
+          this.meetings = response.data.data || [];
           MeetingCache.setAllMeetings(this.meetings);
-          console.log("Meetings fetched from API and cached");
         }
         
         // Reset pagination to first page
@@ -803,6 +824,32 @@ export default {
         this.loading = false;
       }
     },
+    
+    async refreshMeetings() {
+      try {
+        this.loading = true;
+        this.error = null;
+        
+        // Clear cache and force fetch from API
+        MeetingCache.clear();
+        const response = await MeetingService.getAllMeetings();
+        this.meetings = response.data.data || [];
+        MeetingCache.setAllMeetings(this.meetings);
+        console.log("Meetings refreshed from API and cached");
+        
+        // Reset pagination to first page
+        this.currentUpcomingPage = 1;
+        this.currentPastPage = 1;
+      } catch (error) {
+        this.meetings = [];
+        console.error("Error refreshing meetings:", error);
+        this.error = "Failed to refresh meetings";
+        MeetingCache.clear();
+      } finally {
+        this.loading = false;
+      }
+    },
+    
     async scheduleMeeting() {
       try {
         this.loading = true;
@@ -813,37 +860,27 @@ export default {
           title: this.meetingForm.title,
           date: this.meetingForm.date,
           time: this.meetingForm.time,
-          inviteeIds: this.meetingForm.invitees,
           notes: "",
+          inviteeIds: this.meetingForm.invitees || []
         };
 
-        let response;
         if (this.editingMeeting) {
-          response = await MeetingService.updateMeeting(
+          await MeetingService.updateMeeting(
             this.editingMeeting.id,
             meetingData,
             username
           );
-          const updatedMeeting = response.data;
-          const index = this.meetings.findIndex(
-            (m) => m.id === this.editingMeeting.id
-          );
-          if (index !== -1) {
-            this.meetings[index] = updatedMeeting;
-          }
-          // Update cache
-          MeetingCache.updateMeeting(updatedMeeting);
+          // Force refresh meetings list to get updated data
+          await this.refreshMeetings();
           // Dispatch event for dashboard
           window.dispatchEvent(new CustomEvent('meeting-updated'));
         } else {
-          response = await MeetingService.createMeeting(
+          await MeetingService.createMeeting(
             meetingData,
             username
           );
-          const newMeeting = response.data;
-          this.meetings.push(newMeeting);
-          // Add to cache
-          MeetingCache.addMeeting(newMeeting);
+          // Force refresh meetings list to get new meeting
+          await this.refreshMeetings();
           // Dispatch event for dashboard
           window.dispatchEvent(new CustomEvent('meeting-added'));
         }
@@ -872,9 +909,11 @@ export default {
       }
     },
     removeInvitee(id) {
-      this.meetingForm.invitees = this.meetingForm.invitees.filter(
-        (eid) => eid !== id
-      );
+      if (Array.isArray(this.meetingForm.invitees)) {
+        this.meetingForm.invitees = this.meetingForm.invitees.filter(
+          (eid) => eid !== id
+        );
+      }
     },
     confirmInvitees() {
       this.meetingForm.invitees = [...this.tempInvitees];
@@ -882,6 +921,9 @@ export default {
       this.tempInvitees = []; // Reset selections after confirming
     },
     toggleInvitee(id) {
+      if (!Array.isArray(this.tempInvitees)) {
+        this.tempInvitees = [];
+      }
       if (this.tempInvitees.includes(id)) {
         this.tempInvitees = this.tempInvitees.filter((eid) => eid !== id);
       } else {
@@ -889,13 +931,19 @@ export default {
       }
     },
     toggleSelectAll() {
+      if (!Array.isArray(this.tempInvitees)) {
+        this.tempInvitees = [];
+      }
       if (this.allSelected) {
         this.tempInvitees = [];
       } else {
-        this.tempInvitees = this.filteredEmployees.map((emp) => emp.id);
+        this.tempInvitees = Array.isArray(this.filteredEmployees) ? this.filteredEmployees.map((emp) => emp.id) : [];
       }
     },
     getEmployeeName(id) {
+      if (!this.employees || !Array.isArray(this.employees)) {
+        return `ID ${id}`;
+      }
       const emp = this.employees.find((e) => e.id === id);
       return emp ? `${emp.firstName} ${emp.lastName}` : `ID ${id}`;
     },
@@ -952,7 +1000,7 @@ export default {
         title: meeting.title,
         date: meeting.meetingDate,
         time: meeting.meetingTime,
-        invitees: meeting.invitees.map(invitee => invitee.id),
+        invitees: Array.isArray(meeting.invitees) ? meeting.invitees.map(invitee => invitee.id) : [],
       };
       this.tempInvitees = [...this.meetingForm.invitees];
       // Scroll to form
@@ -990,25 +1038,14 @@ export default {
           title: this.meetingToCancel.title,
           date: this.meetingToCancel.meetingDate,
           time: this.meetingToCancel.meetingTime,
-          inviteeIds: this.meetingToCancel.invitees.map(invitee => invitee.id),
-          notes: `CANCELLED: ${this.cancelReason}`
+          notes: `CANCELLED: ${this.cancelReason}`,
+          inviteeIds: this.meetingToCancel.invitees ? this.meetingToCancel.invitees.map(invitee => invitee.id) : []
         };
         
         await MeetingService.updateMeeting(this.meetingToCancel.id, meetingData, username);
         
-        // Update the meeting in local list
-        const index = this.meetings.findIndex(m => m.id === this.meetingToCancel.id);
-        if (index !== -1) {
-          const updatedMeeting = {
-            ...this.meetingToCancel,
-            notes: `CANCELLED: ${this.cancelReason}`
-          };
-          this.meetings[index] = updatedMeeting;
-          // Update cache
-          MeetingCache.updateMeeting(updatedMeeting);
-          // Dispatch event for dashboard
-          window.dispatchEvent(new CustomEvent('meeting-updated'));
-        }
+        // Force refresh meetings list to get updated data
+        await this.refreshMeetings();
         
         this.isCancelModalVisible = false;
         this.meetingToCancel = null;
@@ -1036,9 +1073,8 @@ export default {
 
         await MeetingService.deleteMeeting(this.meetingToDelete.id, username);
 
-        this.meetings = this.meetings.filter(m => m.id !== this.meetingToDelete.id);
-        // Remove from cache
-        MeetingCache.removeMeeting(this.meetingToDelete.id);
+        // Force refresh meetings list to get updated data
+        await this.refreshMeetings();
         // Dispatch event for dashboard
         window.dispatchEvent(new CustomEvent('meeting-deleted'));
 

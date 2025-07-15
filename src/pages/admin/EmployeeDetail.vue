@@ -383,7 +383,7 @@ export default {
       // Fallback to fetching from API
       EmployeeService.getAllEmployees()
         .then((response) => {
-          const allEmployees = response.data;
+          const allEmployees = response.data.data; // Access the data property of ApiResponse
           EmployeeCache.setAllEmployees(allEmployees);
           EmployeeCache.updateLastFetch();
           
@@ -436,6 +436,7 @@ export default {
         this.$nextTick(() => {
           document.getElementById("docUpload").value = "";
         });
+        
         await new Promise((resolve) => setTimeout(resolve, 800));
         this.modalMessage = "Document uploaded successfully!";
         setTimeout(() => {
@@ -449,6 +450,7 @@ export default {
         this.modalLoading = false;
       }
     },
+    
     async fetchDocuments() {
       if (!this.employee || !this.employee.id) return;
       
@@ -463,7 +465,8 @@ export default {
         const res = await EmployeeService.getDocumentsByEmployeeId(
           this.employee.id
         );
-        this.documents = res.data || [];
+        // Fix: Extract the documents array from the API response structure
+        this.documents = res.data.data || [];
         EmployeeCache.setDocuments(this.employee.id, this.documents);
       } catch (error) {
         console.error("Failed to fetch documents:", error);
@@ -487,6 +490,7 @@ export default {
         );
         EmployeeCache.setDocuments(this.employee.id, null);
         await this.fetchDocuments();
+        
         await new Promise((resolve) => setTimeout(resolve, 800));
         this.modalMessage = "Document deleted successfully!";
         setTimeout(() => {
@@ -508,13 +512,12 @@ export default {
       // Validate employee ID
       if (isNaN(this.employee.id) || this.employee.id <= 0) {
         this.profileImageUrl = null;
-        EmployeeCache.setProfileImage(this.employee.id, null);
         return;
       }
       
-      // Check cache first, but only if it's not null (null means we explicitly cached "no image")
+      // Check cache first - if we have a cached value, use it
       const cachedImageUrl = EmployeeCache.getProfileImage(this.employee.id);
-      if (cachedImageUrl !== undefined && cachedImageUrl !== null) {
+      if (cachedImageUrl !== undefined) {
         this.profileImageUrl = cachedImageUrl;
         return;
       }
@@ -555,7 +558,7 @@ export default {
               console.log("Failed to parse JSON response");
             }
             this.profileImageUrl = null;
-            EmployeeCache.setProfileImage(this.employee.id, null);
+            // Don't cache null values - they will be removed from cache
             console.log("No profile image found for employee");
           } else {
             // If response is an image, set the URL with cache-busting parameter
@@ -565,7 +568,7 @@ export default {
           }
         } else {
           this.profileImageUrl = null;
-          EmployeeCache.setProfileImage(this.employee.id, null);
+          // Don't cache null values - they will be removed from cache
         }
       } catch (error) {
         // Handle any remaining exceptions
@@ -575,7 +578,7 @@ export default {
           console.log("Profile image request failed:", error.message);
         }
         this.profileImageUrl = null;
-        EmployeeCache.setProfileImage(this.employee.id, null);
+        // Don't cache null values - they will be removed from cache
       }
     },
     async uploadProfileImage(file) {
@@ -588,6 +591,7 @@ export default {
         EmployeeCache.setProfileImage(this.employee.id, null);
         await new Promise(resolve => setTimeout(resolve, 500));
         await this.fetchProfileImage();
+        
         this.modalMessage = "Profile image uploaded successfully!";
         setTimeout(() => {
           this.modalMessage = "";
@@ -644,7 +648,7 @@ export default {
       try {
         const username = localStorage.getItem("username") || "system";
         const response = await EmployeeService.updateEmployee(this.employee.id, this.editEmployee,username);
-        const updatedEmployee = response.data;
+        const updatedEmployee = response.data.data; // Access the data property of ApiResponse
 
         // Update cache as previously described
         EmployeeCache.setEmployee(this.employee.id, updatedEmployee);

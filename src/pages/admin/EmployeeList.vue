@@ -27,7 +27,7 @@
       <div class="row">
         <div class="col-12">
           <div class="card shadow-lg">
-            <div class="card-header bg-secondary text-white">
+            <div class="card-header bg-primary text-white">
               <h5 class="mb-0">
                 <i class="bi bi-people me-2"></i>
                 Employee Management
@@ -121,7 +121,6 @@ import EmployeePagination from "@/components/EmployeeList/EmployeePagination.vue
 import EmployeeModal from "@/components/EmployeeList/EmployeeModal.vue";
 import EmployeeService from "@/services/EmployeeService";
 import EmployeeCache from "@/services/EmployeeCache";
-import AuthService from "@/services/AuthService";
 
 export default {
   name: "EmployeePage",
@@ -180,48 +179,9 @@ export default {
     },
   },
   methods: {
-    logout() {
-      console.log("Logout clicked");
-      const username = localStorage.getItem("username");
-
-      if (!username) {
-        console.warn("No username in localStorage.");
-        return;
-      }
-
-      this.isLoggingOut = true;
-
-      AuthService.logout(username)
-        .then(() => {
-          setTimeout(() => {
-            localStorage.removeItem("isLoggedIn");
-            localStorage.removeItem("username");
-            console.log("Logout success");
-
-            this.$router.replace({ name: "Login" });
-          }, 1000); // optional delay for modal display
-        })
-        .catch((error) => {
-          console.error("Logout failed:", error);
-        })
-        .finally(() => {
-          setTimeout(() => {
-            this.isLoggingOut = false;
-          }, 1000); // optional delay for modal display
-        });
-    },
-
-    viewReports() {
-      this.$router.push({ name: "Reports" });
-    },
-
-
+    
     goToDashboard() {
       this.$router.push({ name: 'CompanyDashboard' });
-    },
-
-    goToAddEmployee() {
-      this.$router.push({ name: 'AddEmployee' });
     },
 
     fetchEmployees() {
@@ -234,8 +194,8 @@ export default {
       this.isLoading = true;
       EmployeeService.getAllEmployees()
         .then((response) => {
-          this.employees = response.data;
-          EmployeeCache.setAllEmployees(response.data);
+          this.employees = response.data.data; // Access the data property of ApiResponse
+          EmployeeCache.setAllEmployees(response.data.data);
           EmployeeCache.updateLastFetch();
           console.log("Employees fetched from API and cached");
         })
@@ -258,9 +218,12 @@ export default {
       const username = localStorage.getItem("username") || "system";
       EmployeeService.deleteEmployee(this.deleteId,username,this.employees.find(e => e.id === this.deleteId).firstName + " " + this.employees.find(e => e.id === this.deleteId).lastName)
         .then(() => {
-          // Clear cache since we deleted an employee
-          EmployeeCache.clearCache();
-          this.fetchEmployees();
+          // Remove employee from cache
+          EmployeeCache.removeEmployee(this.deleteId);
+          
+          // Update local employees array
+          this.employees = this.employees.filter(e => e.id !== this.deleteId);
+          
           this.showConfirm = false;
           this.deleteId = null;
         })

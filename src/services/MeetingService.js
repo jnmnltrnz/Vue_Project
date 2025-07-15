@@ -24,12 +24,28 @@ class MeetingService {
 
   // Create new meeting
   createMeeting(meetingData, username) {
-    return axios.post(`${API_BASE}/meetings?username=${encodeURIComponent(username)}`, meetingData);
+    // Ensure inviteeIds is included in the request
+    const requestData = {
+      title: meetingData.title,
+      meetingDate: meetingData.date,
+      meetingTime: meetingData.time,
+      notes: meetingData.notes || "",
+      inviteeIds: meetingData.inviteeIds || []
+    };
+    return axios.post(`${API_BASE}/meetings?username=${encodeURIComponent(username)}`, requestData);
   }
 
   // Update meeting
   updateMeeting(id, meetingData, username) {
-    return axios.put(`${API_BASE}/meetings/${id}?username=${encodeURIComponent(username)}`, meetingData);
+    // Ensure inviteeIds is included in the request
+    const requestData = {
+      title: meetingData.title,
+      meetingDate: meetingData.date,
+      meetingTime: meetingData.time,
+      notes: meetingData.notes || "",
+      inviteeIds: meetingData.inviteeIds || []
+    };
+    return axios.put(`${API_BASE}/meetings/${id}?username=${encodeURIComponent(username)}`, requestData);
   }
 
   // Update meeting status
@@ -51,6 +67,12 @@ class MeetingService {
   getMeetingsByStatus(status) {
     return axios.get(`${API_BASE}/meetings/status/${status}`);
   }
+
+  // Get meetings by employee ID
+  getMeetingsByEmployeeId(employeeId) {
+    return axios.get(`${API_BASE}/meetings/employee/${employeeId}`);
+  }
+
 }
 
 export default new MeetingService(); 

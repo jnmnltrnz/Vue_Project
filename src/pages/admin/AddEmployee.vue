@@ -26,7 +26,7 @@
       <div class="row justify-content-center">
         <div class="col-12" style="max-width: 1000px; margin: 0 auto;">
           <div class="card shadow-lg">
-            <div class="card-header bg-secondary text-white">
+            <div class="card-header bg-primary text-white">
               <h5 class="mb-0">
                 <i class="bi bi-person-plus me-2"></i>
                 Employee Information
@@ -247,35 +247,13 @@
       </div>
     </div>
 
-    <!-- Logout Loading Modal -->
-    <div
-      :class="['modal fade', { show: isLoggingOut }]"
-      tabindex="-1"
-      :style="{
-        display: isLoggingOut ? 'block' : 'none',
-        background: isLoggingOut ? 'rgba(0,0,0,0.3)' : '',
-      }"
-      role="dialog"
-    >
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header bg-warning text-dark">
-            <h5 class="modal-title">Logging Out</h5>
-          </div>
-          <div class="modal-body d-flex align-items-center">
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            <span>Please wait while we log you out...</span>
-          </div>
-        </div>
-      </div>
-    </div>
+  
   </div>
 </template>
 
 <script>
 import EmployeeService from "@/services/EmployeeService";
 import EmployeeCache from "@/services/EmployeeCache";
-import AuthService from "@/services/AuthService";
 
 export default {
   name: "AddEmployee",
@@ -325,12 +303,12 @@ export default {
           notes: this.employee.notes.trim() || null
         };
         const username = localStorage.getItem("username") || "system";
-        console.log("Username being sent:", username);
-
-        await EmployeeService.addEmployee(employeeData, username);
+        const response = await EmployeeService.addEmployee(employeeData, username);
         
-        // Clear cache since we added a new employee
-        EmployeeCache.clearCache();
+        // Add the new employee to cache
+        if (response.data && response.data.data) {
+          EmployeeCache.addEmployee(response.data.data);
+        }
         
         // Show success modal
         this.showSuccessModal = true;
@@ -342,20 +320,6 @@ export default {
         this.isLoading = false;
       }
     },
-
-    goBack() {
-        this.$router.push({ name: 'EmployeeList' });
-    },
-
-    goToDashboard() {
-      this.$router.push({ name: 'CompanyDashboard' });
-    },
-
-    goToEmployeeList() {
-      this.showSuccessModal = false;
-      this.$router.push({ name: 'EmployeeList' });
-    },
-
     resetForm() {
       this.showSuccessModal = false;
       this.employee = {
@@ -378,38 +342,6 @@ export default {
         }
       });
     },
-
-    viewReports() {
-      this.$router.push({ name: "Reports" });
-    },
-
-    logout() {
-      const username = localStorage.getItem("username");
-      if (!username) {
-        console.warn("No username in localStorage.");
-        return;
-      }
-
-      this.isLoggingOut = true;
-
-      AuthService.logout(username)
-        .then(() => {
-          setTimeout(() => {
-            localStorage.removeItem("isLoggedIn");
-            localStorage.removeItem("username");
-            console.log("Logout success");
-            this.$router.replace({ name: "Login" });
-          }, 1000);
-        })
-        .catch((error) => {
-          console.error("Logout failed:", error);
-        })
-        .finally(() => {
-          setTimeout(() => {
-            this.isLoggingOut = false;
-          }, 1000);
-        });
-    }
   }
 };
 </script>

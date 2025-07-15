@@ -26,6 +26,26 @@ export default {
     employeeCache.employees.set(id, employee);
   },
 
+  // Add new employee to cache
+  addEmployee(employee) {
+    employeeCache.employees.set(employee.id, employee);
+    this.updateLastFetch();
+  },
+
+  // Update employee in cache
+  updateEmployee(employee) {
+    employeeCache.employees.set(employee.id, employee);
+    this.updateLastFetch();
+  },
+
+  // Remove employee from cache
+  removeEmployee(id) {
+    employeeCache.employees.delete(id);
+    employeeCache.documents.delete(id);
+    employeeCache.profileImages.delete(id);
+    this.updateLastFetch();
+  },
+
   // Get documents from cache
   getDocuments(employeeId) {
     return employeeCache.documents.has(employeeId) 
@@ -47,7 +67,13 @@ export default {
 
   // Set profile image URL in cache
   setProfileImage(employeeId, imageUrl) {
-    employeeCache.profileImages.set(employeeId, imageUrl);
+    if (imageUrl === null || imageUrl === undefined) {
+      // Remove from cache if no image
+      employeeCache.profileImages.delete(employeeId);
+    } else {
+      // Store the image URL
+      employeeCache.profileImages.set(employeeId, imageUrl);
+    }
   },
 
   // Update last fetch time

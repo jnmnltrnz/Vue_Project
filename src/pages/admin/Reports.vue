@@ -91,29 +91,6 @@
       
     </div>
 
-    <!-- Logout Loading Modal -->
-    <div
-      :class="['modal fade', { show: isLoggingOut }]"
-      tabindex="-1"
-      :style="{
-        display: isLoggingOut ? 'block' : 'none',
-        background: isLoggingOut ? 'rgba(0,0,0,0.3)' : '',
-      }"
-      role="dialog"
-    >
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header bg-warning text-dark">
-            <h5 class="modal-title">Logging Out</h5>
-          </div>
-          <div class="modal-body d-flex align-items-center">
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            <span>Please wait while we log you out...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Project Modal -->
     <div
       :class="['modal fade', { show: showProjectModal }]"
@@ -160,7 +137,7 @@
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <label class="form-label">Status</label>
-                  <select v-model="projectForm.status" class="form-select">
+                  <select v-model="projectForm.status" class="form-select" @change="handleProjectStatusChange">
                     <option value="PLANNING">Planning</option>
                     <option value="IN_PROGRESS">In Progress</option>
                     <option value="ON_HOLD">On Hold</option>
@@ -176,6 +153,7 @@
                     min="0" 
                     max="100"
                     placeholder="0-100"
+                    @change="handleProjectProgressChange"
                   >
                 </div>
               </div>
@@ -471,7 +449,7 @@ export default {
 
       try {
         const response = await ProjectService.getAllProjects();
-        this.projects = response.data || response || [];
+        this.projects = response || [];
         ProjectCache.setAllProjects(this.projects);
         ProjectCache.updateLastFetch();
       } catch (error) {
@@ -495,7 +473,7 @@ export default {
       this.isLoadingEmployees = true;
       EmployeeService.getAllEmployees()
         .then((response) => {
-          const employees = response.data;
+          const employees = response.data.data; // Access the data property of ApiResponse
           EmployeeCache.setAllEmployees(employees);
           EmployeeCache.updateLastFetch();
           this.processEmployeeData(employees);
@@ -511,6 +489,15 @@ export default {
     },
 
     processEmployeeData(employees) {
+      // Ensure employees is an array
+      if (!employees || !Array.isArray(employees)) {
+        console.warn('Employees is not an array:', employees);
+        this.totalEmployees = 0;
+        this.departmentStats = [];
+        this.recentHires = [];
+        return;
+      }
+      
       this.totalEmployees = employees.length;
       
       // Group employees by department
@@ -681,14 +668,14 @@ export default {
           const response = await ProjectService.updateProject(this.editingProject.id, projectData);
           const index = this.projects.findIndex(p => p.id === this.editingProject.id);
           if (index !== -1) {
-            this.projects[index] = response.data || response;
+            this.projects[index] = response;
             ProjectCache.updateProject(this.projects[index]);
           }
         } else {
           // Create new project
           const response = await ProjectService.createProject(projectData);
-          this.projects.push(response.data || response);
-          ProjectCache.addProject(response.data || response);
+          this.projects.push(response);
+          ProjectCache.addProject(response);
         }
 
         this.closeProjectModal();
@@ -769,11 +756,10 @@ export default {
         // Update the project with the response from the server
         const projectIndex = this.projects.findIndex(p => p.id === this.selectedProject.id);
         if (projectIndex !== -1) {
-          const updatedProject = response.data || response;
+          const updatedProject = response;
           this.projects[projectIndex] = updatedProject;
           
-          // Keep the original team size - don't modify it based on assignments
-          this.projects[projectIndex].teamSize = this.selectedProject.teamSize;
+          // Let the backend control the team size based on actual assigned employees
           ProjectCache.updateProject(updatedProject);
         }
 
@@ -791,6 +777,41 @@ export default {
       this.handleSaveAssignments();
     },
 
+    handleProjectStatusChange() {
+      // Auto-sync progress based on project status change
+      switch (this.projectForm.status) {
+        case 'COMPLETED':
+          this.projectForm.progress = 100;
+          break;
+        case 'IN_PROGRESS':
+          // Only set to 25% if current progress is 0
+          if (this.projectForm.progress === 0) {
+            this.projectForm.progress = 25;
+          }
+          break;
+        case 'PLANNING':
+          // Reset progress to 0 only if it was completed
+          if (this.projectForm.progress === 100) {
+            this.projectForm.progress = 0;
+          }
+          break;
+        case 'ON_HOLD':
+          // Keep current progress when putting on hold
+          break;
+      }
+    },
+
+    handleProjectProgressChange() {
+      // Auto-sync status based on project progress change
+      if (this.projectForm.progress >= 100) {
+        this.projectForm.status = 'COMPLETED';
+      } else if (this.projectForm.progress > 0) {
+        this.projectForm.status = 'IN_PROGRESS';
+      } else if (this.projectForm.progress === 0) {
+        this.projectForm.status = 'PLANNING';
+      }
+      // Note: ON_HOLD status is preserved regardless of progress
+    }
   }
 };
 </script>

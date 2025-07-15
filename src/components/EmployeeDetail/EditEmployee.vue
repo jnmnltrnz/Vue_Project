@@ -155,6 +155,7 @@
   
   <script>
   import EmployeeService from '@/services/EmployeeService';
+  import EmployeeCache from '@/services/EmployeeCache';
   
   export default {
     name: 'EditEmployee',
@@ -214,7 +215,13 @@
         this.errorMessage = '';
         try {
           const username = localStorage.getItem("username") || "system";
-          await EmployeeService.updateEmployee(this.id, this.employee,username);
+          const response = await EmployeeService.updateEmployee(this.id, this.employee, username);
+          
+          // Update employee in cache
+          if (response.data && response.data.data) {
+            EmployeeCache.updateEmployee(response.data.data);
+          }
+          
           this.successMessage = 'Employee updated successfully!';
         } catch (err) {
           this.errorMessage = 'Failed to update employee.';

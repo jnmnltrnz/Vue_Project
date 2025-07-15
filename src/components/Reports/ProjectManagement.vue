@@ -56,8 +56,7 @@
               <tr>
                 <th class="project-name-col">Project Name</th>
                 <th class="manager-col">Manager</th>
-                <th class="team-size-col">Team Allocation</th>
-                <th class="assigned-col">Assigned</th>
+                <th class="assigned-col">Team Members</th>
                 <th class="progress-col">Progress</th>
                 <th class="status-col">Status</th>
                 <th class="deadline-col">Deadline</th>
@@ -65,11 +64,23 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="project in paginatedProjects" :key="project.id">
+              <tr 
+                v-for="project in paginatedProjects" 
+                :key="project.id"
+                @click="navigateToTasks(project.id)"
+                class="clickable-row"
+                style="cursor: pointer;"
+              >
                 <td class="fw-bold">{{ project.name }}</td>
                 <td>{{ project.manager }}</td>
-                <td>{{ project.teamSize || 0 }} members</td>
-                <td>{{ project.assignedEmployees ? project.assignedEmployees.length : 0 }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    :class="(project.assignedEmployees && project.assignedEmployees.length === project.teamSize) ? 'bg-info' : 'bg-secondary'"
+                  >
+                    {{ project.assignedEmployees ? project.assignedEmployees.length : 0 }}/{{ project.teamSize || 0 }}
+                  </span>
+                </td>
                 <td>
                   <div class="progress" style="height: 8px;">
                     <div 
@@ -90,7 +101,7 @@
                     {{ formatDeadline(project.deadline) }}
                   </span>
                 </td>
-                <td>
+                <td @click.stop>
                   <div class="btn-group" role="group">
                     <button 
                       class="btn btn-sm btn-outline-primary"
@@ -338,6 +349,10 @@ export default {
 
     saveAssignments(assignments) {
       this.$emit('save-assignments', assignments);
+    },
+
+    navigateToTasks(projectId) {
+      this.$router.push({ name: 'Tasks', query: { project: projectId } });
     }
   }
 };
@@ -398,6 +413,36 @@ export default {
 
 .actions-col {
   width: 13%;
+}
+
+/* Clickable row styles */
+.clickable-row {
+  transition: background-color 0.2s ease;
+}
+
+.clickable-row:hover {
+  background-color: #f8f9fa !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.clickable-row td {
+  transition: all 0.2s ease;
+}
+
+/* Prevent text selection on clickable rows */
+.clickable-row {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Actions column should not be affected by row hover */
+.clickable-row td:last-child {
+  background-color: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Empty row styling */

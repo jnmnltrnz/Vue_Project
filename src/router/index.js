@@ -1,14 +1,17 @@
 // For Vue 3 + vue-router v4
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '@/pages/Login.vue';
-import Employee from '@/pages/EmployeeList.vue';
-import EmployeeDetail from '@/pages/EmployeeDetail.vue';
-import CompanyDashboard from '@/pages/CompanyDashboard.vue';
-import AddEmployee from '@/pages/AddEmployee.vue';
-import Reports from '@/pages/Reports.vue';
-import Projects from '@/pages/Projects.vue';
-import Tasks from '@/pages/Tasks.vue';
-import MeetingsPage from '@/pages/Meetings.vue';
+import Employee from '@/pages/admin/EmployeeList.vue';
+import EmployeeDetail from '@/pages/admin/EmployeeDetail.vue';
+import CompanyDashboard from '@/pages/admin/CompanyDashboard.vue';
+import AddEmployee from '@/pages/admin/AddEmployee.vue';
+import Reports from '@/pages/admin/Reports.vue';
+import Projects from '@/pages/user/Projects.vue';
+import Tasks from '@/pages/admin/Tasks.vue';
+import MeetingsPage from '@/pages/admin/Meetings.vue';
+import UserTasks from '@/pages/user/UserTasks.vue';
+import UserViewTask from '@/pages/user/UserViewTask.vue';
+import UserMeetings from '@/pages/user/UserMeetings.vue';
 
 const routes = [
   { path: '/', name: 'Login', component: Login, meta: { title: 'Login - Employee Management System' } },
@@ -18,9 +21,12 @@ const routes = [
   { path: '/dashboard', name: 'CompanyDashboard', component: CompanyDashboard, meta: { title: 'Company Dashboard - Employee Management System', requiresAdmin: true } },
   { path: '/add-employee', name: 'AddEmployee', component: AddEmployee, meta: { title: 'Add Employee - Employee Management System', requiresAdmin: true } },
   { path: '/reports', name: 'Reports', component: Reports, meta: { title: 'Reports - Employee Management System', requiresAdmin: true } },
-  // Non-admin routes
-  { path: '/projects', name: 'Projects', component: Projects, meta: { title: 'Projects - Employee Management System' } },
   { path: '/tasks', name: 'Tasks', component: Tasks, meta: { title: 'Tasks - Employee Management System' } },
+  // Non-admin routes
+  { path: '/projects', name: 'Projects', component: Projects, meta: { title: 'Projects - Employee System' } },
+  { path: '/user-tasks', name: 'UserTasks', component: UserTasks, meta: { title: 'User Tasks - Employee Management System' } },
+  { path: '/user-view-task/:id', name: 'UserViewTask', component: UserViewTask, meta: { title: 'View Task - Employee Management System' } },
+  { path: '/user-meetings', name: 'UserMeetings', component: UserMeetings, meta: { title: 'My Meetings - Employee Management System' } },
   {
     path: '/meetings',
     name: 'Meetings',
