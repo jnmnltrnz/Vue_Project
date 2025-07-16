@@ -50,8 +50,7 @@
       tabindex="-1"
       :class="{ show: isUploading }"
       :style="{
-        display: isUploading ? 'block' : 'none',
-        background: 'rgba(0,0,0,0.4)',
+        display: isUploading ? 'block' : 'none'
       }"
       role="dialog"
     >
@@ -63,6 +62,32 @@
           <div class="modal-body text-center">
             <span class="spinner-border text-primary mb-2"></span>
             <p class="mt-2">{{ loadingMessage }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Profile Image Confirmation Modal -->
+    <div
+      class="modal fade"
+      tabindex="-1"
+      :class="{ show: showRemoveConfirm }"
+      :style="{
+        display: showRemoveConfirm ? 'block' : 'none'
+      }"
+      role="dialog"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Remove Profile Image</h5>
+          </div>
+          <div class="modal-body text-center bg-white text-dark">
+            <p>Are you sure you want to remove the profile image?</p>
+          </div>
+          <div class="modal-footer justify-content-center bg-white">
+            <button class="btn btn-secondary" @click="showRemoveConfirm = false">Cancel</button>
+            <button class="btn btn-danger" @click="confirmRemoveImage">Remove</button>
           </div>
         </div>
       </div>
@@ -93,7 +118,8 @@ export default {
   },
   data() {
     return {
-      profileImage: this.currentImage
+      profileImage: this.currentImage,
+      showRemoveConfirm: false,
     };
   },
   watch: {
@@ -109,10 +135,12 @@ export default {
       this.$refs.fileInput.click();
     },
     removeImage() {
-      if (confirm("Are you sure you want to remove the profile image?")) {
-        this.profileImage = null;
-        this.$emit('remove');
-      }
+      this.showRemoveConfirm = true;
+    },
+    confirmRemoveImage() {
+      this.showRemoveConfirm = false;
+      this.profileImage = null;
+      this.$emit('remove');
     },
     handleFileChange(event) {
       const file = event.target.files[0];
@@ -332,24 +360,28 @@ export default {
   border: none;
   border-radius: 1rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  background: linear-gradient(145deg, #2d2d2d, #1a1a1a);
-  color: #e0e0e0;
+  background: #fff;
+  color: #2c3e50;
 }
 
 .modal-header {
-  background: linear-gradient(135deg, #1a1a1a, #2d2d2d) !important;
-  border-bottom: 1px solid #404040;
+  background: #dc3545 !important;
+  border-bottom: 1px solid #f5c6cb;
   border-radius: 1rem 1rem 0 0;
 }
 
 .modal-header .modal-title {
   font-weight: 600;
-  color: #e0e0e0;
+  color: #fff;
 }
 
 .modal-body {
-  background: linear-gradient(145deg, #2d2d2d, #1a1a1a);
-  color: #e0e0e0;
+  background: #fff;
+  color: #2c3e50;
+}
+
+.modal-footer {
+  background: #fff;
 }
 
 /* Responsive adjustments */

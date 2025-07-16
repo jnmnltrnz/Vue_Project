@@ -27,8 +27,8 @@ class MeetingService {
     // Ensure inviteeIds is included in the request
     const requestData = {
       title: meetingData.title,
-      meetingDate: meetingData.date,
-      meetingTime: meetingData.time,
+      date: meetingData.date,
+      time: meetingData.time,
       notes: meetingData.notes || "",
       inviteeIds: meetingData.inviteeIds || []
     };
@@ -40,8 +40,8 @@ class MeetingService {
     // Ensure inviteeIds is included in the request
     const requestData = {
       title: meetingData.title,
-      meetingDate: meetingData.date,
-      meetingTime: meetingData.time,
+      date: meetingData.date,
+      time: meetingData.time,
       notes: meetingData.notes || "",
       inviteeIds: meetingData.inviteeIds || []
     };

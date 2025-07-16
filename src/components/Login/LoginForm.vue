@@ -9,6 +9,7 @@
         required
         class="form-control mb-2"
         :disabled="loading"
+        autocomplete="username"
       />
       <input
         v-model="password"
@@ -17,6 +18,7 @@
         required
         class="form-control mb-2"
         :disabled="loading"
+        autocomplete="current-password"
       />
       <button type="submit" class="btn btn-primary" :disabled="loading">
         Login
@@ -86,8 +88,6 @@ export default {
                 if (employee && employee.firstName && employee.lastName) {
                   const fullName = `${employee.firstName} ${employee.lastName}`;
                   localStorage.setItem("employeeFullName", fullName);
-                } else {
-                  console.log('Employee not found or missing name data');
                 }
                 
               } catch (error) {

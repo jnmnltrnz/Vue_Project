@@ -865,8 +865,6 @@ export default {
       try {
         if (this.projectId) {
           this.tasks = await TaskService.getTasksByProjectId(this.projectId);
-          console.log(this.projectId);
-          console.log(this.tasks);
         } else {
           // Load all tasks for the current user
           this.tasks = await TaskService.getAllTasks();

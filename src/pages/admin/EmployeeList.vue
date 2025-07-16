@@ -197,7 +197,6 @@ export default {
           this.employees = response.data.data; // Access the data property of ApiResponse
           EmployeeCache.setAllEmployees(response.data.data);
           EmployeeCache.updateLastFetch();
-          console.log("Employees fetched from API and cached");
         })
         .catch((error) => {
           console.error("There was an error fetching the employees!", error);

@@ -286,6 +286,62 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      class="modal fade"
+      tabindex="-1"
+      :class="{ show: showDeleteConfirm }"
+      :style="{
+        display: showDeleteConfirm ? 'block' : 'none',
+        background: 'rgba(0,0,0,0.4)',
+      }"
+      role="dialog"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Confirm Deletion</h5>
+          </div>
+          <div class="modal-body text-center">
+            <p>Are you sure you want to delete this document?</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button class="btn btn-secondary" @click="showDeleteConfirm = false">Cancel</button>
+            <button class="btn btn-danger" @click="confirmDeleteDocument">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div
+      :class="['modal fade', { show: errorMessage }]"
+      tabindex="-1"
+      :style="{
+        display: errorMessage ? 'block' : 'none',
+        background: errorMessage ? 'rgba(0,0,0,0.3)' : '',
+      }"
+      role="dialog"
+    >
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              Error
+            </h5>
+            <button type="button" class="btn-close btn-close-white" @click="closeErrorModal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <p class="mb-0">{{ errorMessage }}</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-danger" @click="closeErrorModal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -308,6 +364,8 @@ export default {
   },
   data() {
     return {
+      showDeleteConfirm: false,
+      deleteDocIdx: null,
       employee: null,
       documents: [],
       selectedFile: null,
@@ -327,15 +385,18 @@ export default {
       editError: '',
       editSuccess: '',
       isLoadingDetails: true,
+      errorMessage: null,
     };
   },
   computed: {
     isEditFormValid() {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return (
         this.editEmployee &&
         this.editEmployee.firstName &&
         this.editEmployee.lastName &&
-        this.editEmployee.email
+        this.editEmployee.email &&
+        emailPattern.test(this.editEmployee.email)
       );
     },
   },
@@ -436,8 +497,6 @@ export default {
         this.$nextTick(() => {
           document.getElementById("docUpload").value = "";
         });
-        
-        await new Promise((resolve) => setTimeout(resolve, 800));
         this.modalMessage = "Document uploaded successfully!";
         setTimeout(() => {
           this.modalMessage = "";
@@ -465,7 +524,7 @@ export default {
         const res = await EmployeeService.getDocumentsByEmployeeId(
           this.employee.id
         );
-        // Fix: Extract the documents array from the API response structure
+     
         this.documents = res.data.data || [];
         EmployeeCache.setDocuments(this.employee.id, this.documents);
       } catch (error) {
@@ -473,31 +532,41 @@ export default {
         this.documents = [];
       }
     },
-    async removeDocument(idx) {
+    removeDocument(idx) {
+      this.deleteDocIdx = idx;
+      this.showDeleteConfirm = true;
+    },
+    async confirmDeleteDocument() {
+      const idx = this.deleteDocIdx;
+      this.showDeleteConfirm = false;
+      this.deleteDocIdx = null;
+      if (idx === null || idx === undefined) return;
       const doc = this.documents[idx];
       if (!doc || !doc.id) return;
-      if (!confirm("Are you sure you want to delete this document?")) return;
+
+      // Optimistically remove from UI
+      const removed = this.documents.splice(idx, 1);
+
+      // Show loading modal, but don't block UI
       this.modalLoading = true;
       this.modalType = "document";
       this.modalMessage = "Deleting the document, please wait...";
+
       try {
         const username = localStorage.getItem("username") || "system";
         await EmployeeService.deleteDocument(
           doc.id,
           username,
           this.employee.firstName + " " + this.employee.lastName,
-          this.documents[idx].fileName
+          doc.fileName
         );
         EmployeeCache.setDocuments(this.employee.id, null);
-        await this.fetchDocuments();
-        
-        await new Promise((resolve) => setTimeout(resolve, 800));
         this.modalMessage = "Document deleted successfully!";
-        setTimeout(() => {
-          this.modalMessage = "";
-          this.modalType = "";
-        }, 2000);
+        this.modalMessage = "";
+        this.modalType = "";
       } catch (error) {
+        // Restore the removed document if deletion failed
+        this.documents.splice(idx, 0, removed[0]);
         alert("Failed to delete document.");
         console.error(error);
       } finally {
@@ -526,39 +595,14 @@ export default {
       this.profileImageUrl = null;
 
       try {
-        // Try to fetch the profile image with timeout and error suppression
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-        
-        // Use a more robust fetch with better error handling
-        const response = await fetch(`${this.API_BASE}/employees/${this.employee.id}/profile-image`, {
-          signal: controller.signal,
-          method: 'GET',
-          headers: {
-            'Accept': 'image/*, application/json, */*',
-            'Cache-Control': 'no-cache' // Prevent browser caching
-          }
-        }).catch(error => {
-          // Suppress fetch errors and return a mock response
-          console.log("Profile image fetch error suppressed:", error.message);
-          return new Response(null, { status: 500 });
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response && response.ok) {
-          const contentType = response.headers.get('content-type');
-          
-          // If response is JSON, it means no image (API returns {"imageUrl": null})
+        // Use EmployeeService to fetch the profile image
+        const response = await EmployeeService.getProfileImage(this.employee.id);
+        if (response && response.status === 200) {
+          const contentType = response.headers['content-type'] || response.headers.get && response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
-            try {
-              const data = await response.json();
-              console.log("Profile image response data:", data);
-            } catch (e) {
-              console.log("Failed to parse JSON response");
-            }
+            // If response is JSON, it means no image (API returns {"imageUrl": null})
             this.profileImageUrl = null;
-            // Don't cache null values - they will be removed from cache
+            // Don't cache null values
             console.log("No profile image found for employee");
           } else {
             // If response is an image, set the URL with cache-busting parameter
@@ -568,17 +612,15 @@ export default {
           }
         } else {
           this.profileImageUrl = null;
-          // Don't cache null values - they will be removed from cache
+        
         }
       } catch (error) {
-        // Handle any remaining exceptions
-        if (error.name === 'AbortError') {
-          console.log("Profile image request timed out");
+        if (error.response && error.response.status === 404) {
+          // No image found
+          this.profileImageUrl = null;
         } else {
-          console.log("Profile image request failed:", error.message);
+          this.profileImageUrl = null;
         }
-        this.profileImageUrl = null;
-        // Don't cache null values - they will be removed from cache
       }
     },
     async uploadProfileImage(file) {
@@ -589,7 +631,6 @@ export default {
       try {
         await EmployeeService.uploadProfileImage(this.employee.id, file);
         EmployeeCache.setProfileImage(this.employee.id, null);
-        await new Promise(resolve => setTimeout(resolve, 500));
         await this.fetchProfileImage();
         
         this.modalMessage = "Profile image uploaded successfully!";
@@ -613,7 +654,6 @@ export default {
         await EmployeeService.deleteProfileImage(this.employee.id);
         this.profileImageUrl = null;
         EmployeeCache.setProfileImage(this.employee.id, null);
-        await new Promise(resolve => setTimeout(resolve, 500));
         this.modalMessage = "Profile image removed successfully!";
         setTimeout(() => {
           this.modalMessage = "";
@@ -639,7 +679,13 @@ export default {
       this.editSuccess = '';
     },
     async saveEdit() {
-      if (!this.isEditFormValid) return;
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!this.isEditFormValid) {
+        if (!this.editEmployee.email || !emailPattern.test(this.editEmployee.email)) {
+          this.errorMessage = 'Please enter a valid email address.';
+        }
+        return;
+      }
       this.isEditLoading = true;
       this.editError = '';
       this.editSuccess = '';
@@ -674,9 +720,23 @@ export default {
         this.editError = 'Failed to update employee.';
         this.modalLoading = false;
         this.modalMessage = '';
+
+        if (err.response && err.response.data && err.response.data.message) {
+          let msg = err.response.data.message;
+          if (msg.includes('Duplicate entry')) {
+            this.errorMessage = 'An employee with this email already exists.';
+          } else if (msg.length > 120) {
+            this.errorMessage = 'An unexpected error occurred. Please try again or contact support.';
+          } else {
+            this.errorMessage = msg;
+          }
+        }
       } finally {
         this.isEditLoading = false;
       }
+    },
+    closeErrorModal() {
+      this.errorMessage = null;
     },
 
     formatDate(dateString) {

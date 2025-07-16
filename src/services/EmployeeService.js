@@ -39,7 +39,7 @@ class EmployeeService {
 
   // Get profile image
   getProfileImage(employeeId) {
-    return axios.get(`${API_BASE}/employees/${employeeId}/profile-image`);
+    return axios.get(`${API_BASE}/employees/${employeeId}/profile-image`, );
   }
 
   // Delete profile image

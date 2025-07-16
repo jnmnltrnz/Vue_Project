@@ -441,7 +441,7 @@
                     </span>
                   </td>
                   <td>
-                    <span v-if="meeting.notes" class="badge bg-info text-white">
+                    <span v-if="meeting.notes" :class="['badge', meeting.notes != null ? 'bg-danger' : 'bg-info', 'text-white']">
                       <i class="bi bi-sticky me-1"></i>
                       {{ meeting.notes }}
                     </span>
@@ -584,13 +584,13 @@
                     </span>
                   </td>
                   <td>
-                    <span class="badge bg-secondary">
-                      <i class="bi bi-clock me-1"></i>
-                      Past
+                    <span :class="['badge', meetingStatus(meeting)]">
+                      <i :class="meetingStatusIcon(meeting)" class="me-1"></i>
+                      {{ meetingStatusLabel(meeting) }}
                     </span>
                   </td>
                   <td>
-                    <span v-if="meeting.notes" class="badge bg-info text-white">
+                    <span v-if="meeting.notes" :class="['badge', meeting.notes.startsWith('CANCELLED:') ? 'bg-danger' : 'bg-info', 'text-white']">
                       <i class="bi bi-sticky me-1"></i>
                       {{ meeting.notes }}
                     </span>
@@ -835,7 +835,6 @@ export default {
         const response = await MeetingService.getAllMeetings();
         this.meetings = response.data.data || [];
         MeetingCache.setAllMeetings(this.meetings);
-        console.log("Meetings refreshed from API and cached");
         
         // Reset pagination to first page
         this.currentUpcomingPage = 1;
@@ -858,8 +857,8 @@ export default {
 
         const meetingData = {
           title: this.meetingForm.title,
-          date: this.meetingForm.date,
-          time: this.meetingForm.time,
+          date:  this.meetingForm.date,
+          time: this.meetingForm.time.length === 5 ? this.meetingForm.time + ':00' : this.meetingForm.time, // ensure 'HH:mm:ss'
           notes: "",
           inviteeIds: this.meetingForm.invitees || []
         };
@@ -952,33 +951,31 @@ export default {
       return invitees.map((emp) => `${emp.firstName} ${emp.lastName}`);
     },
     meetingStatus(meeting) {
+      if (meeting.status === 'CANCELLED') return 'bg-danger';
+      if (meeting.status === 'COMPLETED') return 'bg-success';
       const now = new Date();
-      const meetingDate = new Date(
-        `${meeting.meetingDate}T${meeting.meetingTime}`
-      );
-      if (meetingDate > now) return "bg-info";
-      if (meetingDate.toDateString() === now.toDateString())
-        return "bg-warning";
-      return "bg-secondary";
+      const meetingDate = new Date(`${meeting.meetingDate}T${meeting.meetingTime}`);
+      if (meetingDate > now) return 'bg-info';
+      if (meetingDate.toDateString() === now.toDateString()) return 'bg-warning';
+      return 'bg-secondary';
     },
     meetingStatusLabel(meeting) {
+      if (meeting.status === 'CANCELLED') return 'Cancelled';
+      if (meeting.status === 'COMPLETED') return 'Completed';
       const now = new Date();
-      const meetingDate = new Date(
-        `${meeting.meetingDate}T${meeting.meetingTime}`
-      );
-      if (meetingDate > now) return "Upcoming";
-      if (meetingDate.toDateString() === now.toDateString()) return "Today";
-      return "Past";
+      const meetingDate = new Date(`${meeting.meetingDate}T${meeting.meetingTime}`);
+      if (meetingDate > now) return 'Upcoming';
+      if (meetingDate.toDateString() === now.toDateString()) return 'Today';
+      return 'Past';
     },
     meetingStatusIcon(meeting) {
+      if (meeting.status === 'CANCELLED') return 'bi bi-x-octagon';
+      if (meeting.status === 'COMPLETED') return 'bi bi-check-circle';
       const now = new Date();
-      const meetingDate = new Date(
-        `${meeting.meetingDate}T${meeting.meetingTime}`
-      );
-      if (meetingDate > now) return "bi bi-calendar-event";
-      if (meetingDate.toDateString() === now.toDateString())
-        return "bi bi-clock-history";
-      return "bi bi-clock";
+      const meetingDate = new Date(`${meeting.meetingDate}T${meeting.meetingTime}`);
+      if (meetingDate > now) return 'bi bi-calendar-event';
+      if (meetingDate.toDateString() === now.toDateString()) return 'bi bi-clock-history';
+      return 'bi bi-clock';
     },
     truncateTitle(title) {
       const maxLen = 28;
@@ -1036,13 +1033,14 @@ export default {
         // Update meeting notes with cancellation reason
         const meetingData = {
           title: this.meetingToCancel.title,
-          date: this.meetingToCancel.meetingDate,
-          time: this.meetingToCancel.meetingTime,
-          notes: `CANCELLED: ${this.cancelReason}`,
+          date: this.meetingToCancel.meetingDate, // use meetingToCancel.meetingDate for cancel
+          time: (this.meetingToCancel.meetingTime && this.meetingToCancel.meetingTime.length === 5) ? this.meetingToCancel.meetingTime + ':00' : this.meetingToCancel.meetingTime,
+          notes: this.cancelReason,
           inviteeIds: this.meetingToCancel.invitees ? this.meetingToCancel.invitees.map(invitee => invitee.id) : []
         };
         
         await MeetingService.updateMeeting(this.meetingToCancel.id, meetingData, username);
+        await MeetingService.updateMeetingStatus(this.meetingToCancel.id,'CANCELLED',username)
         
         // Force refresh meetings list to get updated data
         await this.refreshMeetings();

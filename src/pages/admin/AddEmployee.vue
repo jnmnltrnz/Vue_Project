@@ -247,6 +247,34 @@
       </div>
     </div>
 
+    <!-- Error Modal -->
+    <div
+      :class="['modal fade', { show: errorMessage }]"
+      tabindex="-1"
+      :style="{
+        display: errorMessage ? 'block' : 'none',
+        background: errorMessage ? 'rgba(0,0,0,0.3)' : '',
+      }"
+      role="dialog"
+    >
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              Error
+            </h5>
+            <button type="button" class="btn-close btn-close-white" @click="closeErrorModal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <p class="mb-0">{{ errorMessage }}</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-danger" @click="closeErrorModal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   
   </div>
 </template>
@@ -273,19 +301,30 @@ export default {
       },
       isLoading: false,
       isLoggingOut: false,
-      showSuccessModal: false
+      showSuccessModal: false,
+      errorMessage: null
     };
   },
   computed: {
     isFormValid() {
-      return this.employee.firstName.trim() && 
-             this.employee.lastName.trim() && 
-             this.employee.email.trim();
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return (
+        this.employee.firstName.trim() &&
+        this.employee.lastName.trim() &&
+        this.employee.email.trim() &&
+        emailPattern.test(this.employee.email.trim())
+      );
     }
   },
   methods: {
     async handleSubmit() {
-      if (!this.isFormValid) return;
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!this.isFormValid) {
+        if (!this.employee.email || !emailPattern.test(this.employee.email.trim())) {
+          this.errorMessage = 'Please enter a valid email address.';
+        }
+        return;
+      }
 
       this.isLoading = true;
       
@@ -314,8 +353,12 @@ export default {
         this.showSuccessModal = true;
         
       } catch (error) {
+        let errorMessage = "Failed to add employee. Please try again.";
+        if (error.response && error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
         console.error("Error adding employee:", error);
-        alert("Failed to add employee. Please try again.");
+        this.errorMessage = errorMessage;
       } finally {
         this.isLoading = false;
       }
@@ -345,6 +388,9 @@ export default {
         }
       });
     },
+    closeErrorModal() {
+      this.errorMessage = null;
+    }
   }
 };
 </script>
