@@ -13,16 +13,9 @@
               class="btn btn-outline-primary" 
               @click="viewProjects"
             >
-              <i class="bi bi-kanban me-2"></i>My Projects
+              <i class="bi bi-kanban me-2"></i>Back
             </button>
-            <button 
-              class="btn btn-outline-danger" 
-              @click="logout"
-              :disabled="isLoggingOut"
-            >
-              <span v-if="isLoggingOut" class="spinner-border spinner-border-sm me-2"></span>
-              Logout
-            </button>
+            
           </div>
         </div>
       </div>
@@ -39,7 +32,7 @@
       </div>
 
       <!-- No Meetings -->
-      <div v-else-if="meetings.length === 0" class="text-center py-5">
+      <div v-else-if="meetings.length === 0 && !isLoading" class="text-center py-5">
         <div class="card shadow-sm mx-auto" style="max-width: 600px;">
           <div class="card-body py-5">
             <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
@@ -51,7 +44,7 @@
       </div>
 
       <!-- Meetings List -->
-      <div v-else class="row">
+      <div v-else class="row justify-content-center text-center">
         <div v-for="meeting in meetings" :key="meeting.id" class="col-12 col-md-6 col-lg-4 mb-4">
           <div class="meeting-card h-100">
             <div class="card-header-section" :class="getStatusColorClass(meeting.status)">
@@ -95,12 +88,67 @@
                     </div>
                     <span class="invitee-name">{{ invitee.firstName }} {{ invitee.lastName }}</span>
                   </div>
-                  <div v-if="meeting.invitees.length > 3" class="more-invitees">
+                  <button v-if="meeting.invitees.length > 3" class="btn btn-link p-0 more-invitees" @click="openInviteesModal(meeting)">
                     +{{ meeting.invitees.length - 3 }} more
-                  </div>
+                  </button>
                 </div>
                 <div v-else class="no-invitees">
                   <small class="text-muted">No invitees</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Past Meetings List -->
+      <div v-if="!isLoading && pastMeetings.length > 0" class="mt-5">
+        <h4 class="mb-3 text-secondary">Past Meetings</h4>
+        <div class="row text-center">
+          <div v-for="meeting in pastMeetings" :key="meeting.id" class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="meeting-card past-meeting-card h-100">
+              <div class="card-header-section past-meeting-header" :class="getStatusColorClass(meeting.status)">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="meeting-title">
+                    <h6 class="mb-1 fw-bold text-white">{{ meeting.title }}</h6>
+                    <small class="text-white-50">{{ meeting.createdBy || 'Unknown' }}</small>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body-section">
+                <div class="meeting-details">
+                  <div class="detail-item">
+                    <i class="bi bi-calendar3 text-primary"></i>
+                    <span class="detail-text">{{ formatDate(meeting.meetingDate) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <i class="bi bi-clock text-primary"></i>
+                    <span class="detail-text">{{ formatTime(meeting.meetingTime) }}</span>
+                  </div>
+                  <div v-if="meeting.notes" class="detail-item notes-section">
+                    <i class="bi bi-chat-text text-primary"></i>
+                    <span class="detail-text">{{ meeting.notes }}</span>
+                  </div>
+                </div>
+                <div class="invitees-section">
+                  <div class="invitees-header">
+                    <i class="bi bi-people text-muted"></i>
+                    <small class="text-muted">Invitees ({{ meeting.invitees ? meeting.invitees.length : 0 }})</small>
+                  </div>
+                  <div v-if="meeting.invitees && meeting.invitees.length > 0" class="invitees-list">
+                    <div v-for="invitee in meeting.invitees.slice(0, 3)" :key="invitee.id" class="invitee-item">
+                      <div class="invitee-avatar">
+                        {{ getInitials(invitee.firstName, invitee.lastName) }}
+                      </div>
+                      <span class="invitee-name">{{ invitee.firstName }} {{ invitee.lastName }}</span>
+                    </div>
+                    <button v-if="meeting.invitees.length > 3" class="btn btn-link p-0 more-invitees" @click="openInviteesModal(meeting)">
+                      +{{ meeting.invitees.length - 3 }} more
+                    </button>
+                  </div>
+                  <div v-else class="no-invitees">
+                    <small class="text-muted">No invitees</small>
+                  </div>
                 </div>
               </div>
             </div>
@@ -160,11 +208,40 @@
         </div>
       </div>
     </div>
+
+    <!-- Invitees Modal -->
+    <div :class="['modal fade', { show: showInviteesModal }]" tabindex="-1"
+      :style="{ display: showInviteesModal ? 'block' : 'none', background: showInviteesModal ? 'rgba(0,0,0,0.3)' : '' }"
+      role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-people me-2"></i>
+              {{ inviteesModalTitle }} - Remaining Invitees
+            </h5>
+            <button type="button" class="btn-close btn-close-white" @click="closeInviteesModal"></button>
+          </div>
+          <div class="modal-body">
+            <ul class="list-group">
+              <li v-for="invitee in inviteesModalList" :key="invitee.id" class="list-group-item d-flex align-items-center">
+                <div class="invitee-avatar me-2">
+                  {{ getInitials(invitee.firstName, invitee.lastName) }}
+                </div>
+                <span class="invitee-name">{{ invitee.firstName }} {{ invitee.lastName }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeInviteesModal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import AuthService from "@/services/AuthService";
 import MeetingService from "@/services/MeetingService";
 
 export default {
@@ -175,12 +252,16 @@ export default {
       accountId: null,
       isLoggingOut: false,
       isLoading: false,
-      meetings: [],
+      meetings: [], // Upcoming/today meetings
+      pastMeetings: [], // Past meetings
       updatingStatus: null,
       showStatusModal: false,
       statusModalTitle: "",
       statusModalMessage: "",
-      statusModalType: "success"
+      statusModalType: "success",
+      showInviteesModal: false,
+      inviteesModalList: [],
+      inviteesModalTitle: '',
     };
   },
   created() {
@@ -194,13 +275,29 @@ export default {
       try {
         if (this.accountId) {
           const response = await MeetingService.getMeetingsByEmployeeId(this.accountId);
-          this.meetings = response.data.data || [];
+          const allMeetings = response.data.data || [];
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          this.meetings = allMeetings.filter(m => {
+            if (!m.meetingDate) return false;
+            const meetingDate = new Date(m.meetingDate);
+            meetingDate.setHours(0, 0, 0, 0);
+            return meetingDate >= today;
+          });
+          this.pastMeetings = allMeetings.filter(m => {
+            if (!m.meetingDate) return false;
+            const meetingDate = new Date(m.meetingDate);
+            meetingDate.setHours(0, 0, 0, 0);
+            return meetingDate < today;
+          });
         } else {
           this.meetings = [];
+          this.pastMeetings = [];
         }
       } catch (error) {
         console.error("Error loading meetings:", error);
         this.meetings = [];
+        this.pastMeetings = [];
       } finally {
         this.isLoading = false;
       }
@@ -265,20 +362,17 @@ export default {
     viewProjects() {
       this.$router.push({ name: 'Projects' });
     },
-
-    async logout() {
-      this.isLoggingOut = true;
-      try {
-        await AuthService.logout();
-        this.$router.push({ name: 'Login' });
-      } catch (error) {
-        console.error("Error during logout:", error);
-        // Still redirect to login even if logout fails
-        this.$router.push({ name: 'Login' });
-      } finally {
-        this.isLoggingOut = false;
-      }
-    }
+    openInviteesModal(meeting) {
+      // Show all invitees except the first 3
+      this.inviteesModalList = meeting.invitees.slice(3);
+      this.inviteesModalTitle = meeting.title || 'Meeting Invitees';
+      this.showInviteesModal = true;
+    },
+    closeInviteesModal() {
+      this.showInviteesModal = false;
+      this.inviteesModalList = [];
+      this.inviteesModalTitle = '';
+    },
   }
 };
 </script>
@@ -472,6 +566,20 @@ export default {
 
 .modal.show {
   display: block !important;
+}
+
+/* Past meetings color style */
+.past-meeting-card {
+  background: #fbfbfb !important;
+  border: 1.5px solid #e0e0e0 !important;
+  opacity: 0.85;
+  filter: grayscale(0.15);
+}
+
+/* Past meetings header color style */
+.past-meeting-header {
+  background: #ff2929 !important;
+  color: #fff !important;
 }
 
 @media (max-width: 768px) {

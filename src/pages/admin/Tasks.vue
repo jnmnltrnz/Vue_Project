@@ -943,9 +943,7 @@ export default {
       }
       
       // Fallback to default team members if no project or no assigned employees
-      return [
-        { id: 1, firstName: "John", lastName: "Doe", position: "Project Manager" },
-      ];
+      return [];
     },
 
     getAssignedTasks(member) {
