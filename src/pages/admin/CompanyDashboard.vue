@@ -67,24 +67,18 @@
       </div>
 
       <!-- Quick Actions -->
-      <div class="row mb-4">
+      <div class="row mb-4 ">
         <div class="col-12">
           <div class="card shadow-sm">
             <div class="card-header bg-light">
               <h5 class="mb-0">Quick Actions</h5>
             </div>
-            <div class="card-body">
-              <div class="row">
+            <div class="card-body ">
+              <div class="row justify-content-center align-items-center">
                 <div class="col-md-3 mb-3">
                   <button class="btn btn-outline-primary w-100 h-100 py-3" @click="viewEmployees">
                     <i class="bi bi-people me-2"></i>
                     View Employees
-                  </button>
-                </div>
-                <div class="col-md-3 mb-3">
-                  <button class="btn btn-outline-success w-100 h-100 py-3" @click="addEmployee">
-                    <i class="bi bi-person-plus me-2"></i>
-                    Add Employee
                   </button>
                 </div>
                 <div class="col-md-3 mb-3">

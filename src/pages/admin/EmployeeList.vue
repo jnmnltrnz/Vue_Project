@@ -10,6 +10,13 @@
           </div>
           <div class="d-flex gap-2">
             <button
+              class="btn btn-outline-success"
+              @click="$router.push({ name: 'AddEmployee' })"
+            >
+              <i class="bi bi-arrow-left me-2"></i>
+              Add Employees
+            </button>
+            <button
             class="btn btn-outline-primary"
             @click="$router.push({ name: 'CompanyDashboard' })"
           >
