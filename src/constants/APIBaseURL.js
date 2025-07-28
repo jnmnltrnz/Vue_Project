@@ -1,3 +1,3 @@
-const API_BASE = "http://localhost:8081/api";
+const API_BASE = "https://springboot-project-production-6718.up.railway.app/api";
 
 export default API_BASE;

@@ -824,7 +824,7 @@ export default {
       return fileTypes[extension] || extension.toUpperCase();
     },
     getDownloadUrl(fileId) {
-      return `http://localhost:8081/api/tasks/files/${fileId}/download`;
+      return `https://springboot-project-production-6718.up.railway.app/api/tasks/files/${fileId}/download`;
     },
     
 
