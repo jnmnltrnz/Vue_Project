@@ -54,7 +54,7 @@
       <div v-else class="row justify-content-center">
         <div v-for="project in projects" :key="project.id" class="col-12 col-lg-10 col-xl-8 mb-4">
           <div class="card shadow-sm h-100 rounded-4 border-0 mx-auto" style="max-width: 900px;">
-            <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
+            <div class="card-header d-flex justify-content-between align-items-center rounded-top-4">
               <h5 class="mb-0 fw-bold">
                 <i class="bi bi-kanban me-2"></i>{{ project.name }}
               </h5>
@@ -391,7 +391,7 @@ export default {
 }
 
 .header-container {
-  background: linear-gradient(135deg, #667eea 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #2da6f8 0%, #ffffff 100%);
   color: white;
 }
 

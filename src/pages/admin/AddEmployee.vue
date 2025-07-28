@@ -31,9 +31,9 @@
     <!-- Main Content -->
     <div class="container mt-4">
       <div class="row justify-content-center">
-        <div class="col-12" style="max-width: 1000px; margin: 0 auto;">
+        <div class="col-12" style="max-width: 100%; margin: 0 auto;">
           <div class="card shadow-lg">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header ">
               <h5 class="mb-0">
                 <i class="bi bi-person-plus me-2"></i>
                 Employee Information
@@ -403,13 +403,15 @@ export default {
 </script>
 
 <style scoped>
+
+
 .add-employee-page {
   min-height: 100vh;
   background-color: #f8f9fa;
 }
 
 .header-container {
-  background: linear-gradient(135deg, #667eea 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #2da6f8  0%, #ffffff 100%);
   color: white;
 }
 

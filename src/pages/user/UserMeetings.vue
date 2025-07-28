@@ -384,7 +384,7 @@ export default {
 }
 
 .header-container {
-  background: linear-gradient(135deg, #667eea 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #2da6f8 0%, #ffffff 100%);
   color: white;
 }
 

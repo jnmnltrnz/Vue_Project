@@ -861,7 +861,7 @@ export default {
   right: 0;
   bottom: 0;
   background: linear-gradient(45deg, transparent 30%, rgba(115, 113, 113, 0.1) 50%, transparent 70%);
-  animation: shimmer 3s infinite;
+  /* animation: shimmer 3s infinite; */
 }
 
 @keyframes shimmer {
@@ -950,21 +950,6 @@ export default {
   }
 }
 
-/* Animation for loading states */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.employee-details {
-  animation: fadeIn 0.5s ease-out;
-}
 
 .notes-scroll {
   max-height: 120px;   /* or whatever height you prefer */

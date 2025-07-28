@@ -34,7 +34,7 @@
       <div class="row">
         <div class="col-12">
           <div class="card shadow-lg">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header ">
               <h5 class="mb-0">
                 <i class="bi bi-people me-2"></i>
                 Employee Management
@@ -256,7 +256,7 @@ export default {
 }
 
 .header-container {
-  background: linear-gradient(135deg, #667eea 0%, #ffffff 100%);
+  background: linear-gradient(135deg,  #2da6f8 0%, #ffffff 100%);
   color: white;
 }
 

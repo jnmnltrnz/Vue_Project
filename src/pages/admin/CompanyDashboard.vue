@@ -21,7 +21,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container mt-4">
+    <div class=" container mt-4">
       <!-- Dashboard Overview -->
       <div class="row mb-4">
         <div class="col-12">
@@ -649,15 +649,15 @@ export default {
   }
 };
 </script>
-
 <style scoped>
+
 .company-dashboard {
   min-height: 100vh;
   background-color: #f8f9fa;
 }
 
 .header-container {
-  background: linear-gradient(135deg, #667eea 0%, #ffffff 100%);
+  background: linear-gradient(135deg,  #2da6f8 0%, #ffffff 100%);
   color: white;
 }
 
